@@ -1,26 +1,26 @@
-import MaxWidthWrapper from '@/components/MaxWidthWrapper'
-import React from 'react'
-import Link from 'next/link'
+import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 
-import { Button } from '@/components/ui/button'
+import { NavLink } from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-const page = () => {
+const Login = () => {
   return (
     <MaxWidthWrapper className="flex h-dvh items-center justify-center">
-      <Card className="mx-auto max-w-sm transition-all">
+      <Card className="mx-auto max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Sign Up</CardTitle>
+          <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your information to create an account
+            Enter your email below to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -47,22 +47,22 @@ const page = () => {
               <Input id="password" type="password" required />
             </div>
             <Button type="submit" className="w-full">
-              Create an account
+              Login
             </Button>
             {/* <Button variant="outline" className="w-full">
               Login with Google
             </Button> */}
           </div>
           <div className="mt-4 text-center text-sm">
-            Already have an account?{' '}
-            <Link href="login" className="underline">
+            Don&apos;t have an account?{" "}
+            <NavLink to="/signup" replace={true} className="underline">
               Sign up
-            </Link>
+            </NavLink>
           </div>
         </CardContent>
       </Card>
     </MaxWidthWrapper>
-  )
-}
+  );
+};
 
-export default page
+export default Login;
