@@ -9,4 +9,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    global: {},
+    "global.WebSocket": "window.WebSocket", // Ensure WebSocket is available globally
+    "global.btoa": "window.btoa.bind(window)", // Ensure btoa is available globally
+    "process.env": {},
+  },
 });

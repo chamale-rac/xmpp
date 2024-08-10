@@ -1,7 +1,5 @@
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
-
 import { NavLink } from "react-router-dom";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,47 +10,102 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { useXmpp } from "@/lib/hooks/useXmpp";
+import { useState } from "react";
+
+const xmppOptions = {
+  service: "ws://alumchat.lol:7070/ws",
+  domain: "alumchat.lol",
+  resource: "",
+};
+
+interface loginResolve {
+  name: string;
+}
 
 const Login = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const { checkXmppUser } = useXmpp(xmppOptions);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // eslint-disable-next-line no-async-promise-executor
+    const loginPromise = new Promise<loginResolve>(async (resolve, reject) => {
+      try {
+        const isAuthenticated = await checkXmppUser(username, password);
+        if (isAuthenticated) {
+          resolve({ name: username });
+        } else {
+          reject(new Error("Invalid credentials. Please try again."));
+        }
+      } catch {
+        reject(
+          new Error(
+            "An error occurred while logging in. Please try again later."
+          )
+        );
+      }
+    });
+
+    toast.promise(loginPromise, {
+      loading: "Logging in...",
+      success: (data) => `Welcome, ${data.name}!`,
+      error: (err) => `${err.message}`,
+    });
+  };
+
   return (
     <MaxWidthWrapper className="flex h-dvh items-center justify-center">
       <Card className="mx-auto max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your username below to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                {/* <Link
-                  href="#"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  Forgot your password?
-                </Link> */}
+          <form onSubmit={handleLogin}>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
               </div>
-              <Input id="password" type="password" required />
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                  {/* <Link
+                    href="#"
+                    className="ml-auto inline-block text-sm underline"
+                  >
+                    Forgot your password?
+                  </Link> */}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Login
+              </Button>
+              {/* <Button variant="outline" className="w-full">
+                Login with Google
+              </Button> */}
             </div>
-            <Button type="submit" className="w-full">
-              Login
-            </Button>
-            {/* <Button variant="outline" className="w-full">
-              Login with Google
-            </Button> */}
-          </div>
+          </form>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
             <NavLink to="/signup" replace={true} className="underline">

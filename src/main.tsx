@@ -6,8 +6,12 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App.tsx";
 import Login from "@/pages/Login.tsx";
 import SignUp from "@/pages/SignUp.tsx";
+import Auth from "@/pages/Auth.tsx";
 
 import "./index.css";
+import { Toaster } from "sonner";
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const router = createBrowserRouter([
   {
@@ -22,10 +26,15 @@ const router = createBrowserRouter([
     path: "/signup",
     element: <SignUp />,
   },
+  {
+    path: "/auth",
+    element: <Auth />,
+  },
 ]);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RouterProvider router={router} />
+    <Toaster />
   </StrictMode>
 );
