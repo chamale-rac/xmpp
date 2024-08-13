@@ -66,7 +66,7 @@ const SignUp = () => {
 
   return (
     <MaxWidthWrapper className="flex h-dvh items-center justify-center">
-      <Card className="mx-auto max-w-sm transition-all">
+      <Card className="mx-auto max-w-sm transition-all mix-blend-exclusion">
         <CardHeader>
           <CardTitle className="text-2xl">Sign Up</CardTitle>
           <CardDescription>

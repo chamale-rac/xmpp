@@ -1,4 +1,4 @@
-import { Avatar, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import { UserData } from "@/lib/data";
 import { Info, Phone, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,13 +15,12 @@ export default function ChatTopbar({ selectedUser }: ChatTopbarProps) {
     <div className="w-full h-20 flex p-4 justify-between items-center border-b">
       <div className="flex items-center gap-2">
         <Avatar className="flex justify-center items-center">
-          <AvatarImage
-            src={selectedUser.avatar}
-            alt={selectedUser.name}
-            width={6}
-            height={6}
-            className="w-10 h-10 "
-          />
+          <AvatarFallback>
+            {
+              // Get the first letter of the first word in the name
+              selectedUser.name.split(" ")[0][0]
+            }
+          </AvatarFallback>
         </Avatar>
         <div className="flex flex-col">
           <span className="font-medium">{selectedUser.name}</span>

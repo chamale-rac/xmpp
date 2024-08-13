@@ -1,7 +1,7 @@
 import { Message, UserData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import React, { useRef } from "react";
-import { Avatar, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import ChatBottombar from "./chat-bottombar";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -61,12 +61,12 @@ export function ChatList({
               <div className="flex gap-3 items-center">
                 {message.name === selectedUser.name && (
                   <Avatar className="flex justify-center items-center">
-                    <AvatarImage
-                      src={message.avatar}
-                      alt={message.name}
-                      width={6}
-                      height={6}
-                    />
+                    <AvatarFallback>
+                      {
+                        // Get the first letter of the first word in the name
+                        message.name.split(" ")[0][0]
+                      }
+                    </AvatarFallback>
                   </Avatar>
                 )}
                 <span className=" bg-accent p-3 rounded-md max-w-xs">
@@ -74,12 +74,12 @@ export function ChatList({
                 </span>
                 {message.name !== selectedUser.name && (
                   <Avatar className="flex justify-center items-center">
-                    <AvatarImage
-                      src={message.avatar}
-                      alt={message.name}
-                      width={6}
-                      height={6}
-                    />
+                    <AvatarFallback>
+                      {
+                        // Get the first letter of the first word in the name
+                        message.name.split(" ")[0][0]
+                      }
+                    </AvatarFallback>
                   </Avatar>
                 )}
               </div>

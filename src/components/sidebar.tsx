@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { Avatar, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Message } from "@/lib/data";
 
 interface SidebarProps {
@@ -26,7 +26,7 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
   return (
     <div
       data-collapsed={isCollapsed}
-      className="relative group flex flex-col h-full gap-4 p-2 data-[collapsed=true]:p-2 "
+      className="relative group flex flex-col h-full gap-4 p-2 data-[collapsed=true]:p-2"
     >
       {!isCollapsed && (
         <div className="flex justify-between p-2 items-center">
@@ -73,14 +73,13 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
                         "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
                     )}
                   >
-                    <Avatar className="flex justify-center items-center">
-                      <AvatarImage
-                        src={link.avatar}
-                        alt={link.avatar}
-                        width={6}
-                        height={6}
-                        className="w-10 h-10 "
-                      />
+                    <Avatar className="flex justify-center items-center  rounded-3xl border">
+                      <AvatarFallback>
+                        {
+                          // Get the first letter of the first word in the name
+                          link.name.split(" ")[0][0]
+                        }
+                      </AvatarFallback>
                     </Avatar>{" "}
                     <span className="sr-only">{link.name}</span>
                   </a>
@@ -104,14 +103,13 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
                 "justify-start gap-4"
               )}
             >
-              <Avatar className="flex justify-center items-center">
-                <AvatarImage
-                  src={link.avatar}
-                  alt={link.avatar}
-                  width={6}
-                  height={6}
-                  className="w-10 h-10 "
-                />
+              <Avatar className="flex justify-center items-center rounded-3xl border">
+                <AvatarFallback>
+                  {
+                    // Get initials from name
+                    link.name.split(" ")[0][0]
+                  }
+                </AvatarFallback>
               </Avatar>
               <div className="flex flex-col max-w-28">
                 <span>{link.name}</span>

@@ -49,7 +49,7 @@ export function ChatLayout({
           sizes
         )}`;
       }}
-      className="h-full items-stretch"
+      className="h-full items-stretch rounded-lg gag mix-blend-exclusion"
     >
       <ResizablePanel
         defaultSize={defaultLayout[0]}

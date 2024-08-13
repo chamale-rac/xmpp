@@ -54,12 +54,13 @@ const Login = () => {
       loading: "Logging in...",
       success: (data) => `Welcome, ${data.name}!`,
       error: (err) => `${err.message}`,
+      className: "grainy-animated-gradient border-none",
     });
   };
 
   return (
     <MaxWidthWrapper className="flex h-dvh items-center justify-center">
-      <Card className="mx-auto max-w-sm">
+      <Card className="mx-auto max-w-sm mix-blend-exclusion">
         <CardHeader>
           <CardTitle className="text-2xl ">Login</CardTitle>
           <CardDescription>
