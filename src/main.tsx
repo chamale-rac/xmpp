@@ -7,6 +7,7 @@ import App from "./App.tsx";
 import Login from "@/pages/Login.tsx";
 import SignUp from "@/pages/SignUp.tsx";
 import Auth from "@/pages/Auth.tsx";
+import Home from "@/pages/Home.tsx";
 
 import "./index.css";
 import { Toaster } from "sonner";
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
   {
     path: "/auth",
     element: <Auth />,
+  },
+  {
+    path: "/home",
+    element: <Home />,
   },
 ]);
 

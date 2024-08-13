@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useXmpp } from "@/lib/hooks/useXmpp";
+import { useEphemeralXmpp } from "@/lib/hooks/useEphemeralXmpp";
 import { useState } from "react";
 
 const xmppOptions = {
@@ -27,7 +27,7 @@ interface loginResolve {
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { checkXmppUser } = useXmpp(xmppOptions);
+  const { checkXmppUser } = useEphemeralXmpp(xmppOptions);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +61,7 @@ const Login = () => {
     <MaxWidthWrapper className="flex h-dvh items-center justify-center">
       <Card className="mx-auto max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl ">Login</CardTitle>
           <CardDescription>
             Enter your username below to login to your account
           </CardDescription>

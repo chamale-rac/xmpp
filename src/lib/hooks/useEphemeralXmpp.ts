@@ -14,7 +14,7 @@ type CustomError = XMPPError & { code: string };
 /**
  * Custom hook to manage XMPP user registration and authentication.
  */
-export const useXmpp = (xmppOptions: XmppConnectionOptions) => {
+export const useEphemeralXmpp = (xmppOptions: XmppConnectionOptions) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);

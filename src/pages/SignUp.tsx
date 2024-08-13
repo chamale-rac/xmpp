@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useXmpp } from "@/lib/hooks/useXmpp";
+import { useEphemeralXmpp } from "@/lib/hooks/useEphemeralXmpp";
 
 const xmppOptions = {
   service: "ws://alumchat.lol:7070/ws",
@@ -27,7 +27,7 @@ interface signUpResolve {
 const SignUp = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { registerXmppUser } = useXmpp(xmppOptions);
+  const { registerXmppUser } = useEphemeralXmpp(xmppOptions);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
