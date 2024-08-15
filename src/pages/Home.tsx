@@ -3,19 +3,29 @@ import { ChatLayout } from "@/components/chat/chat-layout";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { useXmppClient } from "@/lib/hooks/useClientXmpp";
-import { CircleCheck, Loader, Loader2 } from "lucide-react";
+import { CircleCheck, Loader2 } from "lucide-react";
+import { useXmpp } from "@/lib/hooks/useXmpp";
+import { useEffect } from "react";
 
-const xmppOptions = {
-  service: "ws://alumchat.lol:7070/ws",
-  domain: "alumchat.lol",
-  resource: "",
+interface testCredentials {
+  username: string;
+  password: string;
+}
+
+const testCredentials: testCredentials = {
   username: "cha21881",
   password: "admin",
 };
 
 export default function Home() {
-  const { isConnected } = useXmppClient(xmppOptions);
+  const { isConnected, triggerConnection } = useXmpp();
+
+  useEffect(() => {
+    if (!isConnected) {
+      // Ensure triggerConnection is only called if not already connected
+      triggerConnection(testCredentials.username, testCredentials.password);
+    }
+  }, [isConnected, triggerConnection]); // Add triggerConnection as a dependency
 
   const layoutCookie = Cookies.get("react-resizable-panels:layout");
   const defaultLayout = layoutCookie ? JSON.parse(layoutCookie) : undefined;

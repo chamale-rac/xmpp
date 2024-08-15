@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { client, xml } from "@xmpp/client";
 import debug from "@xmpp/debug";
 
-interface XmppClientOptions {
+interface XmppConnectionOptions {
   service: string;
   domain: string;
   resource: string;
-  username: string;
-  password: string;
 }
 
 interface Contact {
@@ -24,11 +22,11 @@ interface Message {
   timestamp: Date;
 }
 
-export const useXmppClient = (options: XmppClientOptions) => {
-  const [xmpp, setXmpp] = useState<any>(null);
+export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [isConnected, setIsConnected] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const xmppRef = useRef<any>(null); // Use ref to store the XMPP client
 
   const handleStanza = useCallback((stanza: any) => {
     if (stanza.is("presence")) {
@@ -38,31 +36,50 @@ export const useXmppClient = (options: XmppClientOptions) => {
     }
   }, []);
 
-  useEffect(() => {
-    const setupXmpp = async () => {
-      const xmppClient = client(options);
+  const triggerConnection = useCallback(
+    async (username: string, password: string) => {
+      if (xmppRef.current) return; // Prevent reinitializing the client
+
+      const xmppConnectionOptions = {
+        service: xmppOptions.service,
+        resource: xmppOptions.resource,
+        username,
+        password,
+      };
+
+      const xmppClient = client(xmppConnectionOptions);
       debug(xmppClient, true);
 
       xmppClient.on("online", () => {
         setIsConnected(true);
         console.log("XMPP client is online");
       });
-      xmppClient.on("offline", () => setIsConnected(false));
+
+      xmppClient.on("offline", () => {
+        setIsConnected(false);
+        console.log("XMPP client is offline");
+      });
 
       xmppClient.on("stanza", handleStanza);
 
-      await xmppClient.start();
-      setXmpp(xmppClient);
-    };
+      try {
+        await xmppClient.start();
+        xmppRef.current = xmppClient; // Store the client instance in the ref
+      } catch (error) {
+        console.error("Failed to start XMPP client:", error);
+      }
+    },
+    [xmppOptions, handleStanza]
+  );
 
-    setupXmpp();
-
+  useEffect(() => {
     return () => {
-      if (xmpp) {
-        xmpp.stop();
+      if (xmppRef.current) {
+        xmppRef.current.stop().catch(console.error);
+        xmppRef.current = null; // Clear the ref on cleanup
       }
     };
-  }, [options, handleStanza]);
+  }, []);
 
   const handlePresence = (stanza: any) => {
     const from = stanza.getAttr("from");
@@ -94,52 +111,42 @@ export const useXmppClient = (options: XmppClientOptions) => {
 
   const getContacts = useCallback(() => contacts, [contacts]);
 
-  const addContact = useCallback(
-    (jid: string) => {
-      if (xmpp) {
-        xmpp.send(xml("presence", { to: jid, type: "subscribe" }));
-      }
-    },
-    [xmpp]
-  );
+  const addContact = useCallback((jid: string) => {
+    if (xmppRef.current) {
+      xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" }));
+    }
+  }, []);
 
   const getContactDetails = useCallback(
     (jid: string) => contacts.find((contact) => contact.jid === jid),
     [contacts]
   );
 
-  const sendMessage = useCallback(
-    (to: string, body: string) => {
-      if (xmpp) {
-        xmpp.send(xml("message", { to, type: "chat" }, xml("body", {}, body)));
-      }
-    },
-    [xmpp]
-  );
+  const sendMessage = useCallback((to: string, body: string) => {
+    if (xmppRef.current) {
+      xmppRef.current.send(
+        xml("message", { to, type: "chat" }, xml("body", {}, body))
+      );
+    }
+  }, []);
 
-  const joinGroupChat = useCallback(
-    (roomJid: string, nickname: string) => {
-      if (xmpp) {
-        xmpp.send(
-          xml(
-            "presence",
-            { to: `${roomJid}/${nickname}` },
-            xml("x", { xmlns: "http://jabber.org/protocol/muc" })
-          )
-        );
-      }
-    },
-    [xmpp]
-  );
+  const joinGroupChat = useCallback((roomJid: string, nickname: string) => {
+    if (xmppRef.current) {
+      xmppRef.current.send(
+        xml(
+          "presence",
+          { to: `${roomJid}/${nickname}` },
+          xml("x", { xmlns: "http://jabber.org/protocol/muc" })
+        )
+      );
+    }
+  }, []);
 
-  const setPresence = useCallback(
-    (status: string) => {
-      if (xmpp) {
-        xmpp.send(xml("presence", {}, xml("status", {}, status)));
-      }
-    },
-    [xmpp]
-  );
+  const setPresence = useCallback((status: string) => {
+    if (xmppRef.current) {
+      xmppRef.current.send(xml("presence", {}, xml("status", {}, status)));
+    }
+  }, []);
 
   return {
     isConnected,
@@ -150,5 +157,6 @@ export const useXmppClient = (options: XmppClientOptions) => {
     joinGroupChat,
     setPresence,
     messages,
+    triggerConnection,
   };
 };

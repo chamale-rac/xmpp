@@ -114,7 +114,7 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
               <div className="flex flex-col max-w-28">
                 <span>{link.name}</span>
                 {link.messages.length > 0 && (
-                  <span className="text-zinc-300 text-xs truncate ">
+                  <span className="text-zinc-400 text-xs truncate ">
                     {link.messages[link.messages.length - 1].name.split(" ")[0]}
                     : {link.messages[link.messages.length - 1].message}
                   </span>
@@ -124,6 +124,26 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
           )
         )}
       </nav>
+      <div
+        className={cn(
+          buttonVariants({ variant: "grey", size: "xl" }),
+          "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
+          "justify-start gap-4 mt-auto"
+        )}
+      >
+        <Avatar className="flex justify-center items-center rounded-3xl border">
+          <AvatarFallback>
+            {
+              // Get initials from name
+              "cha21881@uvg.edu.gt".split(" ")[0][0].toLocaleUpperCase()
+            }
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col max-w-28">
+          <span>{"Samuel Chamalé"}</span>
+          <span className="text-zinc-400 text-xs truncate ">Status</span>
+        </div>
+      </div>
     </div>
   );
 }

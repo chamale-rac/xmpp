@@ -11,14 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useEphemeralXmpp } from "@/lib/hooks/useEphemeralXmpp";
 import { useState } from "react";
-
-const xmppOptions = {
-  service: "ws://alumchat.lol:7070/ws",
-  domain: "alumchat.lol",
-  resource: "",
-};
+import { useXmpp } from "@/lib/hooks/useXmpp";
 
 interface loginResolve {
   name: string;
@@ -27,7 +21,7 @@ interface loginResolve {
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { checkXmppUser } = useEphemeralXmpp(xmppOptions);
+  const { checkXmppUser } = useXmpp();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
