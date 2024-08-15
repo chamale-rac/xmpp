@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Message } from "@/lib/data";
+import Profile from "@/components/profile";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -124,26 +125,7 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
           )
         )}
       </nav>
-      <div
-        className={cn(
-          buttonVariants({ variant: "grey", size: "xl" }),
-          "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
-          "justify-start gap-4 mt-auto"
-        )}
-      >
-        <Avatar className="flex justify-center items-center rounded-3xl border">
-          <AvatarFallback>
-            {
-              // Get initials from name
-              "cha21881@uvg.edu.gt".split(" ")[0][0].toLocaleUpperCase()
-            }
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col max-w-28">
-          <span>{"Samuel Chamalé"}</span>
-          <span className="text-zinc-400 text-xs truncate ">Status</span>
-        </div>
-      </div>
+      <Profile className="mt-auto" isCollapsed={isCollapsed} />
     </div>
   );
 }
