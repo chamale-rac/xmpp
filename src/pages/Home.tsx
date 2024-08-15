@@ -3,8 +3,20 @@ import { ChatLayout } from "@/components/chat/chat-layout";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { useXmppClient } from "@/lib/hooks/useClientXmpp";
+import { CircleCheck, Loader, Loader2 } from "lucide-react";
+
+const xmppOptions = {
+  service: "ws://alumchat.lol:7070/ws",
+  domain: "alumchat.lol",
+  resource: "",
+  username: "cha21881",
+  password: "admin",
+};
 
 export default function Home() {
+  const { isConnected } = useXmppClient(xmppOptions);
+
   const layoutCookie = Cookies.get("react-resizable-panels:layout");
   const defaultLayout = layoutCookie ? JSON.parse(layoutCookie) : undefined;
 
@@ -33,9 +45,10 @@ export default function Home() {
         <ChatLayout defaultLayout={defaultLayout} navCollapsedSize={8} />
       </div>
 
-      <div className="flex max-w-5xl w-full items-start justify-end text-xs md:text-sm text-muted-foreground ">
+      <div className="flex justify-between max-w-5xl w-full items-start text-xs md:text-sm text-muted-foreground ">
+        <p></p>
         <p className="max-w-[150px] sm:max-w-lg text-right">
-          Connected to{" "}
+          {isConnected ? "Connected" : "Disconnected"} to{" "}
           <a
             className="font-semibold"
             href="http://alumchat.lol"
@@ -43,6 +56,11 @@ export default function Home() {
           >
             alumchat.lol
           </a>
+          {isConnected ? (
+            <CircleCheck className="w-4 h-4 inline-block ml-1 mb-1" />
+          ) : (
+            <Loader2 className="w-4 h-4 inline-block ml-1 mb-1 animate-spin duration-1000" />
+          )}
         </p>
       </div>
     </main>
