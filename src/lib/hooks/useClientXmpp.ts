@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useCallback } from "react";
 import { client, xml } from "@xmpp/client";
 import debug from "@xmpp/debug";
-import XMPPError from "@xmpp/error";
 
-interface XmppConnectionOptions {
+interface XmppClientOptions {
   service: string;
   domain: string;
   resource: string;
@@ -11,125 +11,144 @@ interface XmppConnectionOptions {
   password: string;
 }
 
-type CustomError = XMPPError & { code: string };
+interface Contact {
+  jid: string;
+  name: string;
+  status: string;
+}
 
-export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
+interface Message {
+  from: string;
+  to: string;
+  body: string;
+  timestamp: Date;
+}
+
+export const useXmppClient = (options: XmppClientOptions) => {
+  const [xmpp, setXmpp] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const xmppRef = useRef<any>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  const handleStanza = useCallback((stanza: any) => {
+    if (stanza.is("presence")) {
+      handlePresence(stanza);
+    } else if (stanza.is("message")) {
+      handleMessage(stanza);
+    }
+  }, []);
 
   useEffect(() => {
-    const xmpp = client({
-      service: xmppOptions.service,
-      resource: xmppOptions.resource,
-      username: xmppOptions.username,
-      password: xmppOptions.password,
-    });
+    const setupXmpp = async () => {
+      const xmppClient = client(options);
+      debug(xmppClient, true);
 
-    debug(xmpp, true);
+      xmppClient.on("online", () => {
+        setIsConnected(true);
+        console.log("XMPP client is online");
+      });
+      xmppClient.on("offline", () => setIsConnected(false));
 
-    xmpp.on("error", (error: CustomError) => {
-      console.error("XMPP Error:", error);
-      setError(error.message);
-      setIsConnected(false);
-    });
+      xmppClient.on("stanza", handleStanza);
 
-    xmpp.on("online", async (address: string) => {
-      console.log("XMPP Client online:", address);
-      setIsConnected(true);
-      await fetchContacts();
-      setPresence("Available");
-    });
+      await xmppClient.start();
+      setXmpp(xmppClient);
+    };
 
-    xmpp.on("stanza", (stanza: any) => {
-      handleStanza(stanza);
-    });
-
-    xmpp.start().catch((err) => console.error("xmpp.start", err));
-    xmppRef.current = xmpp;
+    setupXmpp();
 
     return () => {
-      if (xmppRef.current) {
-        xmppRef.current.stop().catch(console.error);
+      if (xmpp) {
+        xmpp.stop();
       }
     };
-  }, [xmppOptions]);
+  }, [options, handleStanza]);
 
-  const fetchContacts = async () => {
-    if (!xmppRef.current) return;
-    try {
-      const iq = xml(
-        "iq",
-        { type: "get", id: "roster_1" },
-        xml("query", { xmlns: "jabber:iq:roster" })
-      );
-      xmppRef.current.send(iq);
-    } catch (e) {
-      console.error("Fetch contacts error:", e);
-      setError(e as string);
-    }
+  const handlePresence = (stanza: any) => {
+    const from = stanza.getAttr("from");
+    const status = stanza.getChildText("status") || "";
+
+    setContacts((prevContacts) => {
+      const index = prevContacts.findIndex((contact) => contact.jid === from);
+      if (index !== -1) {
+        const updatedContacts = [...prevContacts];
+        updatedContacts[index] = { ...updatedContacts[index], status };
+        return updatedContacts;
+      }
+      return [...prevContacts, { jid: from, name: from.split("@")[0], status }];
+    });
   };
 
-  const handleStanza = (stanza: any) => {
-    if (stanza.is("iq") && stanza.getChild("query")) {
-      const query = stanza.getChild("query");
-      if (query.attrs.xmlns === "jabber:iq:roster") {
-        const contactList = query.getChildren("item").map((item: any) => ({
-          jid: item.attrs.jid,
-          name: item.attrs.name,
-          subscription: item.attrs.subscription,
-        }));
-        setContacts(contactList);
-      }
-    } else if (stanza.is("message") && stanza.attrs.type === "chat") {
-      const from = stanza.attrs.from;
-      const body = stanza.getChild("body").text();
+  const handleMessage = (stanza: any) => {
+    const from = stanza.getAttr("from");
+    const to = stanza.getAttr("to");
+    const body = stanza.getChildText("body");
+
+    if (body) {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { from, body, time: new Date() },
+        { from, to, body, timestamp: new Date() },
       ]);
     }
   };
 
-  const sendMessage = (to: string, message: string) => {
-    if (!xmppRef.current) return;
-    const messageStanza = xml(
-      "message",
-      { to, type: "chat" },
-      xml("body", {}, message)
-    );
-    xmppRef.current.send(messageStanza);
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { from: "me", body: message, time: new Date() },
-    ]);
-  };
+  const getContacts = useCallback(() => contacts, [contacts]);
 
-  const addContact = (jid: string, name: string) => {
-    if (!xmppRef.current) return;
-    const iq = xml(
-      "iq",
-      { type: "set", id: "add_contact_1" },
-      xml("query", { xmlns: "jabber:iq:roster" }, xml("item", { jid, name }))
-    );
-    xmppRef.current.send(iq);
-  };
+  const addContact = useCallback(
+    (jid: string) => {
+      if (xmpp) {
+        xmpp.send(xml("presence", { to: jid, type: "subscribe" }));
+      }
+    },
+    [xmpp]
+  );
 
-  const setPresence = (status: string) => {
-    if (!xmppRef.current) return;
-    const presence = xml("presence", {}, xml("status", {}, status));
-    xmppRef.current.send(presence);
-  };
+  const getContactDetails = useCallback(
+    (jid: string) => contacts.find((contact) => contact.jid === jid),
+    [contacts]
+  );
+
+  const sendMessage = useCallback(
+    (to: string, body: string) => {
+      if (xmpp) {
+        xmpp.send(xml("message", { to, type: "chat" }, xml("body", {}, body)));
+      }
+    },
+    [xmpp]
+  );
+
+  const joinGroupChat = useCallback(
+    (roomJid: string, nickname: string) => {
+      if (xmpp) {
+        xmpp.send(
+          xml(
+            "presence",
+            { to: `${roomJid}/${nickname}` },
+            xml("x", { xmlns: "http://jabber.org/protocol/muc" })
+          )
+        );
+      }
+    },
+    [xmpp]
+  );
+
+  const setPresence = useCallback(
+    (status: string) => {
+      if (xmpp) {
+        xmpp.send(xml("presence", {}, xml("status", {}, status)));
+      }
+    },
+    [xmpp]
+  );
 
   return {
     isConnected,
-    contacts,
-    messages,
-    error,
-    sendMessage,
+    getContacts,
     addContact,
+    getContactDetails,
+    sendMessage,
+    joinGroupChat,
     setPresence,
+    messages,
   };
 };
