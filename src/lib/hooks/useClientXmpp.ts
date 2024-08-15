@@ -26,6 +26,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [isConnected, setIsConnected] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [status, setStatus] = useState<"away" | "chat" | "dnd" | "xa">("chat");
+  const [statusMessageState, setStatusMessageState] = useState("༼ つ ◕_◕ ༽つ");
   const xmppRef = useRef<any>(null); // Use ref to store the XMPP client
 
   const handleStanza = useCallback((stanza: any) => {
@@ -52,6 +54,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
       xmppClient.on("online", () => {
         setIsConnected(true);
+        setStatusMessage("༼ つ ◕_◕ ༽つ");
         console.log("XMPP client is online");
       });
 
@@ -142,11 +145,42 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
-  const setPresence = useCallback((status: string) => {
-    if (xmppRef.current) {
-      xmppRef.current.send(xml("presence", {}, xml("status", {}, status)));
-    }
-  }, []);
+  // Show types obtained from https://slixmpp.readthedocs.io/en/slix-1.5.1/api/stanza/presence.html https://xmpp.org/rfcs/rfc3921.html
+  const setPresence = useCallback(
+    (status: "away" | "chat" | "dnd" | "xa") => {
+      if (xmppRef.current) {
+        const presenceXML = xml(
+          "presence",
+          {},
+          xml("show", {}, status),
+          xml("status", {}, statusMessageState)
+        );
+        xmppRef.current.send(presenceXML);
+        console.log("Setting presence to", status);
+        console.log("Presence XML:", presenceXML.toString());
+        setStatus(status);
+      }
+    },
+    [statusMessageState]
+  );
+
+  const setStatusMessage = useCallback(
+    (message: string) => {
+      if (xmppRef.current) {
+        const presenceXML = xml(
+          "presence",
+          {},
+          xml("show", {}, status),
+          xml("status", {}, message)
+        );
+        xmppRef.current.send(presenceXML);
+        console.log("Status message set to", message);
+        console.log("Status message XML:", presenceXML.toString());
+        setStatusMessageState(message);
+      }
+    },
+    [status]
+  );
 
   return {
     isConnected,
@@ -158,5 +192,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     setPresence,
     messages,
     triggerConnection,
+    setStatusMessage,
+    status,
+    statusMessageState,
   };
 };
