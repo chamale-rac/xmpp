@@ -17,6 +17,8 @@ import {
 import Profile from "@/components/Profile";
 import AddContact from "./AddContact";
 import Inbox from "./Inbox";
+import { useXmpp } from "@/lib/hooks/useXmpp";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -31,6 +33,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ links, isCollapsed }: SidebarProps) {
+  const { contacts } = useXmpp();
+
   return (
     <div
       data-collapsed={isCollapsed}
@@ -110,71 +114,72 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
           </div>
         </div>
       )}
-      <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
-        {links.map((link, index) =>
-          isCollapsed ? (
-            <TooltipProvider key={index}>
-              <Tooltip key={index} delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <a
-                    href="#"
-                    className={cn(
-                      buttonVariants({ variant: link.variant, size: "icon" }),
-                      "h-11 w-11 md:h-16 md:w-16",
-                      link.variant === "grey" &&
+      <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2 overflow-y-auto overflow-x-hidden">
+        {contacts.length > 0 &&
+          contacts.map((contact, index) =>
+            isCollapsed ? (
+              <TooltipProvider key={index}>
+                <Tooltip key={index} delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <a
+                      href="#"
+                      className={cn(
+                        buttonVariants({ variant: "ghost", size: "icon" }),
+                        "h-11 w-11 md:h-16 md:w-16",
+                        // link.variant === "grey" &&
                         "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-                    )}
+                      )}
+                    >
+                      <Avatar className="flex justify-center items-center  rounded-3xl border">
+                        <AvatarFallback>
+                          {
+                            // Get the first letter of the first word in the name
+                            contact.name.split(" ")[0][0].toLocaleUpperCase()
+                          }
+                        </AvatarFallback>
+                      </Avatar>{" "}
+                      <span className="sr-only">{contact.name}</span>
+                    </a>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="right"
+                    className="flex items-center gap-4"
                   >
-                    <Avatar className="flex justify-center items-center  rounded-3xl border">
-                      <AvatarFallback>
-                        {
-                          // Get the first letter of the first word in the name
-                          link.name.split(" ")[0][0]
-                        }
-                      </AvatarFallback>
-                    </Avatar>{" "}
-                    <span className="sr-only">{link.name}</span>
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="right"
-                  className="flex items-center gap-4"
-                >
-                  {link.name}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <a
-              key={index}
-              href="#"
-              className={cn(
-                buttonVariants({ variant: link.variant, size: "xl" }),
-                link.variant === "grey" &&
+                    {contact.name}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <a
+                key={index}
+                href="#"
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "xl" }),
+                  // link.variant === "grey" &&
                   "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
-                "justify-start gap-4"
-              )}
-            >
-              <Avatar className="flex justify-center items-center rounded-3xl border">
-                <AvatarFallback>
-                  {
-                    // Get initials from name
-                    link.name.split(" ")[0][0]
-                  }
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col max-w-28">
-                <span>{link.name}</span>
-                {link.messages.length > 0 && (
+                  "justify-start gap-4"
+                )}
+              >
+                <Avatar className="flex justify-center items-center rounded-3xl border">
+                  <AvatarFallback>
+                    {
+                      // Get initials from name
+                      contact.name.split(" ")[0][0].toLocaleUpperCase()
+                    }
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col max-w-28">
+                  <span>{contact.name}</span>
+                  {/* {link.messages.length > 0 && (
                   <span className="text-zinc-400 text-xs truncate ">
                     {link.messages[link.messages.length - 1].name.split(" ")[0]}
                     : {link.messages[link.messages.length - 1].message}
                   </span>
-                )}
-              </div>
-            </a>
-          )
-        )}
+                )} */}
+                </div>
+              </a>
+            )
+          )}
       </nav>
       <Profile className="mt-auto" isCollapsed={isCollapsed} />
     </div>

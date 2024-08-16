@@ -14,12 +14,18 @@ interface Notification {
   message: string;
 }
 
+interface Contact {
+  jid: string;
+  name: string;
+  status: string;
+}
+
 // Define the shape of your context
 interface XmppContextProps {
   registerXmppUser: (username: string, password: string) => Promise<boolean>;
   checkXmppUser: (username: string, password: string) => Promise<boolean>;
   isConnected: boolean;
-  getContacts: () => any[];
+  contacts: Contact[];
   addContact: (
     jid: string,
     message: string,
@@ -59,7 +65,6 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
 
   const {
     isConnected,
-    getContacts,
     addContact,
     getContactDetails,
     sendMessage,
@@ -74,15 +79,16 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     acceptSubscription,
     denySubscription,
     subscriptionRequests,
+    contacts,
   } = useXmppClient(globalXmppOptions);
 
   return (
     <XmppContext.Provider
       value={{
+        contacts,
         registerXmppUser,
         checkXmppUser,
         isConnected,
-        getContacts,
         addContact,
         getContactDetails,
         sendMessage,

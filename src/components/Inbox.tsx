@@ -5,39 +5,7 @@ import { Separator } from "./ui/separator";
 import { cn } from "@/lib/utils";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Tooltip } from "@radix-ui/react-tooltip";
-import { Cctv, Check, CircleCheck, Trash, UserRoundCheck } from "lucide-react";
-
-interface Notification {
-  from: string;
-  message: string;
-}
-
-const fakeSubscriptionRequests: Notification[] = [
-  {
-    from: "user@alumchat.lolaaaaaa",
-    message: "Hey! Let's chat!",
-  },
-  {
-    from: "user@alumchat.lol",
-    message: "Hey! Let's chat!",
-  },
-  {
-    from: "user@alumchat.lol",
-    message: "Hey! Let's chataaaaaaaaaaaa!",
-  },
-  {
-    from: "user@alumchat.lol",
-    message: "Hey! Let's chat!",
-  },
-  {
-    from: "user@alumchat.lol",
-    message: "Hey! Let's chat!",
-  },
-  {
-    from: "user@alumchat.lol",
-    message: "Hey! Let's chat!",
-  },
-];
+import { Cctv, Check, Trash } from "lucide-react";
 
 const Inbox = () => {
   const { subscriptionRequests, acceptSubscription, denySubscription } =

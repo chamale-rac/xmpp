@@ -86,7 +86,7 @@ const Profile = ({
                     href="#"
                     className={cn(
                       buttonVariants({ variant: "grey", size: "icon" }),
-                      "h-11 w-11 md:h-16 md:w-16",
+                      "h-11 w-11 md:h-16 md:w-16 -ml-[5px]",
                       "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
                     )}
                   >
