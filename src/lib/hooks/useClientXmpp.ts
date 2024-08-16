@@ -22,10 +22,18 @@ interface Message {
   timestamp: Date;
 }
 
+interface Notification {
+  from: string;
+  message: string;
+}
+
 export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [isConnected, setIsConnected] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [subscriptionRequests, setSubscriptionRequests] = useState<
+    Notification[]
+  >([]);
   const [status, setStatus] = useState<"away" | "chat" | "dnd" | "xa">("chat");
   const [statusMessageState, setStatusMessageState] = useState("༼ つ ◕_◕ ༽つ");
   const xmppRef = useRef<any>(null); // Use ref to store the XMPP client
@@ -91,18 +99,50 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
   const handlePresence = (stanza: any) => {
     const from = stanza.getAttr("from");
+    const type = stanza.getAttr("type");
     const status = stanza.getChildText("status") || "";
 
-    setContacts((prevContacts) => {
-      const index = prevContacts.findIndex((contact) => contact.jid === from);
-      if (index !== -1) {
-        const updatedContacts = [...prevContacts];
-        updatedContacts[index] = { ...updatedContacts[index], status };
-        return updatedContacts;
-      }
-      return [...prevContacts, { jid: from, name: from.split("@")[0], status }];
-    });
+    if (type === "subscribe") {
+      // This is a subscription request
+      setSubscriptionRequests((prev) => [...prev, { from, message: status }]);
+    } else {
+      // Handle other presence updates as before
+      setContacts((prevContacts) => {
+        const index = prevContacts.findIndex((contact) => contact.jid === from);
+        if (index !== -1) {
+          const updatedContacts = [...prevContacts];
+          updatedContacts[index] = { ...updatedContacts[index], status };
+          return updatedContacts;
+        }
+        return [
+          ...prevContacts,
+          { jid: from, name: from.split("@")[0], status },
+        ];
+      });
+    }
   };
+
+  const acceptSubscription = useCallback((jid: string) => {
+    if (xmppRef.current) {
+      xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" }));
+      // TODO: Consider removing subscribe back
+      xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" }));
+      // Remove the request from the pending list
+      setSubscriptionRequests((prev) =>
+        prev.filter((request) => request.from !== jid)
+      );
+    }
+  }, []);
+
+  const denySubscription = useCallback((jid: string) => {
+    if (xmppRef.current) {
+      xmppRef.current.send(xml("presence", { to: jid, type: "unsubscribed" }));
+      // Remove the request from the pending list
+      setSubscriptionRequests((prev) =>
+        prev.filter((request) => request.from !== jid)
+      );
+    }
+  }, []);
 
   const handleMessage = (stanza: any) => {
     const from = stanza.getAttr("from");
@@ -238,5 +278,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     status,
     statusMessageState,
     username,
+    subscriptionRequests,
+    acceptSubscription,
+    denySubscription,
   };
 };

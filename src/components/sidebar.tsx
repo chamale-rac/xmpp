@@ -1,9 +1,4 @@
-import {
-  CirclePlus,
-  MoreHorizontal,
-  SquarePen,
-  UsersRound,
-} from "lucide-react";
+import { Bell, CirclePlus, SquarePen, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -21,6 +16,7 @@ import {
 } from "@/components/ui/popover";
 import Profile from "@/components/Profile";
 import AddContact from "./AddContact";
+import Inbox from "./Inbox";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -48,24 +44,32 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
           </div>
 
           <div>
-            <a
-              href="#"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-9 w-9"
-              )}
-            >
-              <MoreHorizontal size={20} />
-            </a>
-            <a
-              href="#"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-9 w-9"
-              )}
-            >
-              <SquarePen size={20} />
-            </a>
+            <Popover>
+              <PopoverTrigger asChild>
+                <a
+                  href="#"
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "icon" }),
+                    "h-9 w-9"
+                  )}
+                >
+                  <Bell size={20} />
+                </a>
+              </PopoverTrigger>
+
+              {/*max-w-[214px]*/}
+              <PopoverContent
+                align="end"
+                alignOffset={-36}
+                className="max-w-[275px] max-h-60 overflow-hidden"
+              >
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Inbox />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
             <Popover>
               <PopoverTrigger asChild>
                 <a
@@ -77,7 +81,7 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
                   <CirclePlus size={20} />
                 </a>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-fit">
+              <PopoverContent align="end" className="max-w-[214px]">
                 <div className="grid gap-4">
                   <div className="grid gap-2 ">
                     <Button

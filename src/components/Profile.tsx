@@ -176,7 +176,7 @@ const Profile = ({
                   >
                     <Undo className="w-4 h-4" />
                   </Button>
-                  <Button className="p-1 h-6" onClick={handleSend}>
+                  <Button className="p-1 h-6 bg-black/60" onClick={handleSend}>
                     <Send className="w-4 h-4" />
                   </Button>
                 </div>

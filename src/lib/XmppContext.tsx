@@ -9,6 +9,11 @@ const globalXmppOptions = {
   resource: "",
 };
 
+interface Notification {
+  from: string;
+  message: string;
+}
+
 // Define the shape of your context
 interface XmppContextProps {
   registerXmppUser: (username: string, password: string) => Promise<boolean>;
@@ -34,6 +39,9 @@ interface XmppContextProps {
   status: "away" | "chat" | "dnd" | "xa";
   statusMessageState: string;
   username: string;
+  subscriptionRequests: Notification[];
+  acceptSubscription: (jid: string) => void;
+  denySubscription: (jid: string) => void;
 }
 
 // Create the context
@@ -63,6 +71,9 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     status,
     statusMessageState,
     username,
+    acceptSubscription,
+    denySubscription,
+    subscriptionRequests,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -87,6 +98,9 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         status,
         statusMessageState,
         username,
+        acceptSubscription,
+        denySubscription,
+        subscriptionRequests,
       }}
     >
       {children}
