@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 import { Send, Undo } from "lucide-react";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 const Profile = ({
   isCollapsed,
@@ -34,8 +35,13 @@ const Profile = ({
   isCollapsed: boolean;
   className?: string;
 }) => {
-  const { setPresence, setStatusMessage, status, statusMessageState } =
-    useXmpp();
+  const {
+    setPresence,
+    setStatusMessage,
+    status,
+    statusMessageState,
+    username,
+  } = useXmpp();
 
   const [statusMessageStateHistory, setStatusMessageStateHistory] =
     useState(statusMessageState);
@@ -88,9 +94,8 @@ const Profile = ({
                       <AvatarFallback>
                         {
                           // Get the first letter of the first word in the name
-                          "cha21881@uvg.edu.gt"
-                            .split(" ")[0][0]
-                            .toLocaleUpperCase()
+                          username &&
+                            username.split(" ")[0][0].toLocaleUpperCase()
                         }
                       </AvatarFallback>
                     </Avatar>{" "}
@@ -101,7 +106,7 @@ const Profile = ({
                   side="right"
                   className="flex items-center gap-4"
                 >
-                  You
+                  You: {username}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -117,13 +122,16 @@ const Profile = ({
                 <AvatarFallback>
                   {
                     // Get initials from name
-                    "cha21881@uvg.edu.gt".split(" ")[0][0].toLocaleUpperCase()
+                    username && username.split(" ")[0][0].toLocaleUpperCase()
                   }
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col max-w-28">
-                <span>{"Samuel Chamalé"}</span>
-                <span className="text-zinc-400 text-xs truncate ">Status</span>
+              <div className="flex flex-col max-w-full truncate">
+                <span>{username}</span>
+                <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
+                  <Badge variant="secondary">{status}</Badge>
+                  <div>{statusMessageState}</div>
+                </div>
               </div>
             </a>
           )}

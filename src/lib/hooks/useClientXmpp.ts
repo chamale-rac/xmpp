@@ -29,6 +29,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [status, setStatus] = useState<"away" | "chat" | "dnd" | "xa">("chat");
   const [statusMessageState, setStatusMessageState] = useState("༼ つ ◕_◕ ༽つ");
   const xmppRef = useRef<any>(null); // Use ref to store the XMPP client
+  const [username, setUsername] = useState("");
 
   const handleStanza = useCallback((stanza: any) => {
     if (stanza.is("presence")) {
@@ -48,6 +49,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         username,
         password,
       };
+
+      setUsername(username);
 
       const xmppClient = client(xmppConnectionOptions);
       debug(xmppClient, true);
@@ -114,9 +117,16 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
   const getContacts = useCallback(() => contacts, [contacts]);
 
-  const addContact = useCallback((jid: string) => {
+  const addContact = useCallback((jid: string, message: string) => {
     if (xmppRef.current) {
-      xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" }));
+      xmppRef.current.send(
+        xml(
+          "presence",
+          { to: jid, type: "subscribe" },
+          xml("status", {}, message)
+        )
+      );
+      console.log("Sending contact request to", jid, "with message:", message);
     }
   }, []);
 
@@ -151,7 +161,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       if (xmppRef.current) {
         const presenceXML = xml(
           "presence",
-          {},
+          { "xml:lang": "en" },
           xml("show", {}, status),
           xml("status", {}, statusMessageState)
         );
@@ -169,7 +179,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       if (xmppRef.current) {
         const presenceXML = xml(
           "presence",
-          {},
+          { "xml:lang": "en" },
           xml("show", {}, status),
           xml("status", {}, message)
         );
@@ -195,5 +205,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     setStatusMessage,
     status,
     statusMessageState,
+    username,
   };
 };

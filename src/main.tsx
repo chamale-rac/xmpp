@@ -13,7 +13,7 @@ import { Toaster } from "sonner";
 
 import { XmppProvider } from "@/lib/XmppContext.tsx";
 
-import AnimatedCursor from "react-animated-cursor";
+// import AnimatedCursor from "react-animated-cursor";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -42,7 +42,7 @@ createRoot(document.getElementById("root")!).render(
       <RouterProvider router={router} />
       <Toaster />
     </XmppProvider>
-    <AnimatedCursor
+    {/* <AnimatedCursor
       innerSize={8}
       outerSize={20} // Original 35
       innerScale={1}
@@ -56,6 +56,6 @@ createRoot(document.getElementById("root")!).render(
         backgroundColor: "#f0f0f0",
         mixBlendMode: "exclusion",
       }}
-    />
+    /> */}
   </StrictMode>
 );

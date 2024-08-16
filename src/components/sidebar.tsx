@@ -1,15 +1,26 @@
-import { MoreHorizontal, SquarePen } from "lucide-react";
+import {
+  CirclePlus,
+  MoreHorizontal,
+  SquarePen,
+  UsersRound,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Message } from "@/lib/data";
-import Profile from "@/components/profile";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import Profile from "@/components/Profile";
+import AddContact from "./AddContact";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -46,7 +57,6 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
             >
               <MoreHorizontal size={20} />
             </a>
-
             <a
               href="#"
               className={cn(
@@ -56,6 +66,43 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
             >
               <SquarePen size={20} />
             </a>
+            <Popover>
+              <PopoverTrigger asChild>
+                <a
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "icon" }),
+                    "h-9 w-9"
+                  )}
+                >
+                  <CirclePlus size={20} />
+                </a>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-fit">
+                <div className="grid gap-4">
+                  <div className="grid gap-2 ">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 items-center justify-start"
+                      onClick={() => {}}
+                    >
+                      <SquarePen size={20} />
+                      <span>Start Chat</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 items-center justify-start"
+                      onClick={() => {}}
+                    >
+                      <UsersRound size={20} />
+                      <span>Create Group Chat</span>
+                    </Button>
+                    <AddContact />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       )}

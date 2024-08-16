@@ -15,7 +15,7 @@ interface XmppContextProps {
   checkXmppUser: (username: string, password: string) => Promise<boolean>;
   isConnected: boolean;
   getContacts: () => any[];
-  addContact: (jid: string) => void;
+  addContact: (jid: string, message: string) => void;
   getContactDetails: (jid: string) => any;
   sendMessage: (to: string, body: string) => void;
   joinGroupChat: (roomJid: string, nickname: string) => void;
@@ -29,6 +29,7 @@ interface XmppContextProps {
   setValidPassword: (password: string) => void;
   status: "away" | "chat" | "dnd" | "xa";
   statusMessageState: string;
+  username: string;
 }
 
 // Create the context
@@ -57,6 +58,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     setStatusMessage,
     status,
     statusMessageState,
+    username,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -80,6 +82,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         setStatusMessage,
         status,
         statusMessageState,
+        username,
       }}
     >
       {children}
