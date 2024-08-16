@@ -8,7 +8,7 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Message } from "@/lib/data";
+
 import {
   Popover,
   PopoverTrigger,
@@ -22,18 +22,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface SidebarProps {
   isCollapsed: boolean;
-  links: {
-    name: string;
-    messages: Message[];
-    avatar: string;
-    variant: "grey" | "ghost";
-  }[];
   onClick?: () => void;
   isMobile: boolean;
 }
 
-export function Sidebar({ links, isCollapsed }: SidebarProps) {
-  const { contacts, gettingContacts } = useXmpp();
+export function Sidebar({ isCollapsed }: SidebarProps) {
+  const { contacts, gettingContacts, setSelectedContact } = useXmpp();
 
   return (
     <div
@@ -44,7 +38,9 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
         <div className="flex justify-between p-2 items-center">
           <div className="flex gap-2 items-center text-2xl">
             <p className="font-medium">Chats</p>
-            <span className="text-zinc-300">({links.length})</span>
+            <span className="text-zinc-500">
+              ({gettingContacts ? "?" : contacts.length})
+            </span>
           </div>
 
           <div>
@@ -145,12 +141,12 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
                 <Tooltip key={index} delayDuration={0}>
                   <TooltipTrigger asChild>
                     <a
-                      href="#"
                       className={cn(
                         buttonVariants({ variant: "ghost", size: "icon" }),
                         "h-11 w-11 md:h-16 md:w-16",
-                        "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                        "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
                       )}
+                      onClick={() => setSelectedContact(contact)}
                     >
                       <Avatar className="flex justify-center items-center  rounded-3xl border">
                         <AvatarFallback>
@@ -171,12 +167,12 @@ export function Sidebar({ links, isCollapsed }: SidebarProps) {
             ) : (
               <a
                 key={index}
-                href="#"
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "xl" }),
                   "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
-                  "justify-start gap-4"
+                  "justify-start gap-4 cursor-pointer"
                 )}
+                onClick={() => setSelectedContact(contact)}
               >
                 <Avatar className="flex justify-center items-center rounded-3xl border">
                   <AvatarFallback>

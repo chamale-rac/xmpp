@@ -1,4 +1,3 @@
-import { userData } from "@/lib/data";
 import React, { useEffect, useState } from "react";
 import {
   ResizableHandle,
@@ -8,6 +7,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Sidebar } from "../sidebar";
 import { Chat } from "./chat";
+import { Cat } from "lucide-react";
+import { useXmpp } from "@/lib/hooks/useXmpp";
 
 interface ChatLayoutProps {
   defaultLayout: number[] | undefined;
@@ -20,8 +21,9 @@ export function ChatLayout({
   defaultCollapsed = false,
   navCollapsedSize,
 }: ChatLayoutProps) {
+  const { selectedContact } = useXmpp();
+
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
-  const [selectedUser] = React.useState(userData[0]);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -74,24 +76,23 @@ export function ChatLayout({
             "min-w-[50px] md:min-w-[70px] transition-all duration-300 ease-in-out"
         )}
       >
-        <Sidebar
-          isCollapsed={isCollapsed || isMobile}
-          links={userData.map((user) => ({
-            name: user.name,
-            messages: user.messages ?? [],
-            avatar: user.avatar,
-            variant: selectedUser.name === user.name ? "grey" : "ghost",
-          }))}
-          isMobile={isMobile}
-        />
+        <Sidebar isCollapsed={isCollapsed || isMobile} isMobile={isMobile} />
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-        <Chat
-          messages={selectedUser.messages}
-          selectedUser={selectedUser}
-          isMobile={isMobile}
-        />
+        {selectedContact ? (
+          <Chat isMobile={isMobile} />
+        ) : (
+          <div className="flex flex-col gap-1 items-center text-center text-sm h-full justify-center">
+            <Cat className="w-12 h-12 text-zinc-500/40" />
+            <div className="text-zinc-800 text-lg">
+              Nothing to see here... yet! <br />
+              <span className="text-zinc-600 text-sm">
+                Select a user to chat with, or start a new chat.
+              </span>
+            </div>
+          </div>
+        )}
       </ResizablePanel>
     </ResizablePanelGroup>
   );

@@ -50,6 +50,8 @@ interface XmppContextProps {
   acceptSubscription: (jid: string) => void;
   denySubscription: (jid: string) => void;
   gettingContacts: boolean;
+  selectedContact: Contact | undefined;
+  setSelectedContact: (user: Contact) => void;
 }
 
 // Create the context
@@ -83,6 +85,8 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     subscriptionRequests,
     contacts,
     gettingContacts,
+    selectedContact,
+    setSelectedContact,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -111,6 +115,8 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         denySubscription,
         subscriptionRequests,
         gettingContacts,
+        selectedContact,
+        setSelectedContact,
       }}
     >
       {children}

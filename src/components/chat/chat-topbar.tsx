@@ -1,16 +1,24 @@
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import { UserData } from "@/lib/data";
-import { Info, Phone, Video } from "lucide-react";
+import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "../ui/button";
+import { useXmpp } from "@/lib/hooks/useXmpp";
 
-interface ChatTopbarProps {
-  selectedUser: UserData;
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "../ui/separator";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
-const TopbarIcons = [{ icon: Phone }, { icon: Video }, { icon: Info }];
+export default function ChatTopbar() {
+  const { selectedContact } = useXmpp();
 
-export default function ChatTopbar({ selectedUser }: ChatTopbarProps) {
+  if (!selectedContact) {
+    return null;
+  }
+
   return (
     <div className="w-full h-20 flex p-4 justify-between items-center border-b">
       <div className="flex items-center gap-2">
@@ -18,30 +26,62 @@ export default function ChatTopbar({ selectedUser }: ChatTopbarProps) {
           <AvatarFallback>
             {
               // Get the first letter of the first word in the name
-              selectedUser.name.split(" ")[0][0]
+              selectedContact.name.split(" ")[0][0].toLocaleUpperCase()
             }
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col">
-          <span className="font-medium">{selectedUser.name}</span>
-          <span className="text-xs">Active 2 mins ago</span>
+          <span className="font-medium">
+            {selectedContact.name}
+            {/* <span className="text-zinc-500">
+              {" ⌁ "}
+              {selectedContact.jid}
+            </span> */}
+          </span>
+          <span className="text-xs">{selectedContact.show}</span>
         </div>
       </div>
 
       <div>
-        {TopbarIcons.map((icon, index) => (
-          <a
-            key={index}
-            href="#"
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "icon" }),
-              "h-9 w-9",
-              "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-            )}
-          >
-            <icon.icon size={20} className="text-muted-foreground" />
-          </a>
-        ))}
+        <Popover>
+          <PopoverTrigger asChild>
+            <a
+              href="#"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "h-9 w-9"
+              )}
+            >
+              <Info size={20} />
+            </a>
+          </PopoverTrigger>
+          <PopoverContent side="left" align="start" className="p-0">
+            <Card className=" border-none shadow-none p-0">
+              <CardHeader>
+                <CardTitle>{selectedContact.name}</CardTitle>
+              </CardHeader>
+              <Separator />
+              <CardContent className="mt-5">
+                <div className="grid gap-6">
+                  <div className="grid gap-3 text-zinc-500">
+                    <span className="text-xs">
+                      <span className="font-bold">jid:</span>{" "}
+                      {selectedContact.jid}
+                    </span>
+                    <span className="text-xs">
+                      <span className="font-bold">status:</span>{" "}
+                      {selectedContact.status}
+                    </span>
+                    <span className="text-xs">
+                      <span className="font-bold">show:</span>{" "}
+                      {selectedContact.show}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );

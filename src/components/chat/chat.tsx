@@ -4,15 +4,11 @@ import { ChatList } from "./chat-list";
 import React from "react";
 
 interface ChatProps {
-  messages?: Message[];
-  selectedUser: UserData;
   isMobile: boolean;
 }
 
-export function Chat({ messages, selectedUser, isMobile }: ChatProps) {
-  const [messagesState, setMessages] = React.useState<Message[]>(
-    messages ?? []
-  );
+export function Chat({ isMobile }: ChatProps) {
+  const [messagesState, setMessages] = React.useState<Message[]>([]);
 
   const sendMessage = (newMessage: Message) => {
     setMessages([...messagesState, newMessage]);
@@ -20,14 +16,14 @@ export function Chat({ messages, selectedUser, isMobile }: ChatProps) {
 
   return (
     <div className="flex flex-col justify-between w-full h-full">
-      <ChatTopbar selectedUser={selectedUser} />
-
-      <ChatList
+      <ChatTopbar />
+      {/* <ChatList
         messages={messagesState}
         selectedUser={selectedUser}
         sendMessage={sendMessage}
         isMobile={isMobile}
-      />
+      /> */}
+      By the way, I'm a chat component
     </div>
   );
 }

@@ -29,6 +29,7 @@ interface Notification {
 }
 
 export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
+  const [selectedContact, setSelectedContact] = useState<Contact | undefined>();
   const [isConnected, setIsConnected] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -117,8 +118,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
-  const handlePresence = (stanza: any) => {
-    // Console log the stanza
+  const handlePresence = useCallback((stanza: any) => {
     console.log("Presence stanza:", stanza.toString());
     const from = stanza.getAttr("from").split("/")[0];
     const type = stanza.getAttr("type");
@@ -130,7 +130,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
 
     if (type === "subscribe") {
-      // This is a subscription request
       setSubscriptionRequests((prev) => [...prev, { from, message: status }]);
     } else {
       console.log(
@@ -141,7 +140,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         "and show",
         show
       );
-      // Update or add contact status
+
       setContacts((prevContacts) => {
         const contactExists = prevContacts.some(
           (contact) => contact.jid === from
@@ -157,8 +156,19 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
           ];
         }
       });
+
+      setSelectedContact((prev) => {
+        if (prev && prev.jid === from) {
+          return {
+            ...prev,
+            status,
+            show,
+          };
+        }
+        return prev;
+      });
     }
-  };
+  }, []); // Remove selectedContact from dependencies
 
   const handleRoster = (stanza: any) => {
     const items = stanza
@@ -346,5 +356,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     denySubscription,
     contacts,
     gettingContacts,
+    selectedContact,
+    setSelectedContact,
   };
 };

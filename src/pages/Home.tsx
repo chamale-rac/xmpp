@@ -42,7 +42,8 @@ export default function Home() {
         </a>
         {/* https://tailwindcss.com/docs/mix-blend-mode */}
         <a
-          href="https://github.com/jakobhoeg/shadcn-chat"
+          target="_blank"
+          href="https://github.com/chamale-rac/xmpp"
           className={cn(
             buttonVariants({ variant: "ghost", size: "icon" }),
             "h-10 w-10 mix-blend-exclusion"
