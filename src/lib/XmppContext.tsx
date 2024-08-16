@@ -18,6 +18,7 @@ interface Contact {
   jid: string;
   name: string;
   status: string;
+  show: string;
 }
 
 // Define the shape of your context
@@ -48,6 +49,7 @@ interface XmppContextProps {
   subscriptionRequests: Notification[];
   acceptSubscription: (jid: string) => void;
   denySubscription: (jid: string) => void;
+  gettingContacts: boolean;
 }
 
 // Create the context
@@ -80,6 +82,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     denySubscription,
     subscriptionRequests,
     contacts,
+    gettingContacts,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -107,6 +110,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         acceptSubscription,
         denySubscription,
         subscriptionRequests,
+        gettingContacts,
       }}
     >
       {children}

@@ -13,6 +13,7 @@ interface Contact {
   jid: string;
   name: string;
   status: string;
+  show: string;
 }
 
 interface Message {
@@ -31,6 +32,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [isConnected, setIsConnected] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [gettingContacts, setGettingContacts] = useState(true);
   const [subscriptionRequests, setSubscriptionRequests] = useState<
     Notification[]
   >([]);
@@ -103,21 +105,9 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     };
   }, []);
 
-  const handleRoster = (stanza: any) => {
-    const items = stanza
-      .getChild("query", "jabber:iq:roster")
-      .getChildren("item");
-    const rosterContacts = items.map((item: any) => ({
-      jid: item.attrs.jid,
-      name: item.attrs.name || item.attrs.jid.split("@")[0],
-      subscription: item.attrs.subscription,
-      status: "", // We'll update this when we receive presence information
-    }));
-    setContacts(rosterContacts);
-  };
-
   const requestRoster = useCallback(() => {
     if (xmppRef.current) {
+      setGettingContacts(true);
       const rosterIQ = xml(
         "iq",
         { type: "get", id: "roster_1" },
@@ -128,24 +118,72 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   }, []);
 
   const handlePresence = (stanza: any) => {
-    const from = stanza.getAttr("from");
+    // Console log the stanza
+    console.log("Presence stanza:", stanza.toString());
+    const from = stanza.getAttr("from").split("/")[0];
     const type = stanza.getAttr("type");
-    const status = stanza.getChildText("status") || "";
+    const status = stanza.getChildText("status") || "online";
+    let show = stanza.getChildText("show") || "chat";
+
+    if (status === "offline") {
+      show = "offline";
+    }
 
     if (type === "subscribe") {
       // This is a subscription request
       setSubscriptionRequests((prev) => [...prev, { from, message: status }]);
     } else {
-      // Update contact status
+      console.log(
+        "Presence from",
+        from,
+        "with status",
+        status,
+        "and show",
+        show
+      );
+      // Update or add contact status
       setContacts((prevContacts) => {
-        const updatedContacts = prevContacts.map((contact) =>
-          contact.jid === from ? { ...contact, status } : contact
+        const contactExists = prevContacts.some(
+          (contact) => contact.jid === from
         );
-        // If the contact is not in the list, we don't add it here
-        // as it should have been added when processing the roster
-        return updatedContacts;
+        if (contactExists) {
+          return prevContacts.map((contact) =>
+            contact.jid === from ? { ...contact, status, show } : contact
+          );
+        } else {
+          return [
+            ...prevContacts,
+            { jid: from, name: from.split("@")[0], status, show },
+          ];
+        }
       });
     }
+  };
+
+  const handleRoster = (stanza: any) => {
+    const items = stanza
+      .getChild("query", "jabber:iq:roster")
+      .getChildren("item");
+    setContacts((prevContacts) => {
+      const updatedContacts = [...prevContacts];
+      items.forEach((item: any) => {
+        const jid = item.attrs.jid.split("/")[0];
+        const name = item.attrs.name || item.attrs.jid.split("@")[0];
+        const contactExists = prevContacts.some(
+          (contact) => contact.jid === jid
+        );
+        if (!contactExists) {
+          updatedContacts.push({
+            jid,
+            name,
+            status: "unknown",
+            show: "unknown",
+          });
+        }
+      });
+      return updatedContacts;
+    });
+    setGettingContacts(false);
   };
 
   const acceptSubscription = useCallback((jid: string) => {
@@ -183,7 +221,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   };
 
-  const getContacts = useCallback(() => contacts, [contacts]);
+  // const getContacts = useCallback(() => contacts, [contacts]);
 
   const shareOnlineStatus = useCallback((jid: string, activate: boolean) => {
     if (xmppRef.current) {
@@ -307,5 +345,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     acceptSubscription,
     denySubscription,
     contacts,
+    gettingContacts,
   };
 };
