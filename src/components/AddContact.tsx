@@ -16,6 +16,7 @@ import { useXmpp } from "@/lib/hooks/useXmpp";
 import React, { useEffect, useState } from "react";
 import { TransitionPanel } from "@/components/core/transition-panel";
 import useMeasure from "react-use-measure";
+import { Switch } from "./ui/switch";
 
 function AddContact() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -24,6 +25,7 @@ function AddContact() {
   const [ref, bounds] = useMeasure();
   const [address, setAddress] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [shareStatus, setShareStatus] = useState(true);
   const { addContact } = useXmpp();
 
   function isValidEmail(email: string) {
@@ -81,8 +83,7 @@ function AddContact() {
           <DialogHeader className="mb-2">
             <DialogTitle>Just one more step...</DialogTitle>
             <DialogDescription>
-              Give your special contact a custom message! Feel free to leave it
-              blank.
+              Send a custom message! Feel free to leave it blank.
             </DialogDescription>
           </DialogHeader>
           <Label htmlFor="message" className="sr-only">
@@ -96,6 +97,14 @@ function AddContact() {
             required
             type="text"
           />
+          <div className="inline-flex items-center mt-2 gap-1">
+            <Switch
+              id="share-status"
+              checked={shareStatus}
+              onCheckedChange={(checked) => setShareStatus(checked)}
+            />
+            <Label htmlFor="share-status">Share Status</Label>
+          </div>
         </>
       ),
       continueCondition: true,
@@ -119,7 +128,7 @@ function AddContact() {
   const handleSetActiveIndex = async (newIndex: number) => {
     setDirection(newIndex > activeIndex ? 1 : -1);
     if (newIndex === 2) {
-      await addContact(address, message);
+      await addContact(address, message, shareStatus);
       handleRestart();
       setIsSuccess(true);
     }
@@ -130,6 +139,7 @@ function AddContact() {
     setActiveIndex(0);
     setAddress("");
     setMessage("");
+    setShareStatus(true);
     setIsSuccess(false);
   };
 
@@ -144,7 +154,7 @@ function AddContact() {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeIndex, address, message]); // Dependencies to ensure the correct state is used
+  }, [activeIndex, address, message, shareStatus]); // Dependencies to ensure the correct state is used
 
   return (
     <Dialog>

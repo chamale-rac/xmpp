@@ -15,7 +15,11 @@ interface XmppContextProps {
   checkXmppUser: (username: string, password: string) => Promise<boolean>;
   isConnected: boolean;
   getContacts: () => any[];
-  addContact: (jid: string, message: string) => void;
+  addContact: (
+    jid: string,
+    message: string,
+    shareOnlineStatus?: boolean
+  ) => void;
   getContactDetails: (jid: string) => any;
   sendMessage: (to: string, body: string) => void;
   joinGroupChat: (roomJid: string, nickname: string) => void;

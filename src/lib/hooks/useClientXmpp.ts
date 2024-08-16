@@ -36,6 +36,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       handlePresence(stanza);
     } else if (stanza.is("message")) {
       handleMessage(stanza);
+    } else {
+      // console.log("Unhandled stanza:", stanza.toString());
     }
   }, []);
 
@@ -117,18 +119,48 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
   const getContacts = useCallback(() => contacts, [contacts]);
 
-  const addContact = useCallback((jid: string, message: string) => {
+  const shareOnlineStatus = useCallback((jid: string, activate: boolean) => {
     if (xmppRef.current) {
-      xmppRef.current.send(
-        xml(
-          "presence",
-          { to: jid, type: "subscribe" },
-          xml("status", {}, message)
-        )
-      );
-      console.log("Sending contact request to", jid, "with message:", message);
+      if (activate) {
+        // Send "subscribed" presence to share online status
+        xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" }));
+        console.log("Sharing online status with", jid);
+      } else {
+        // Send "unsubscribed" presence to stop sharing online status
+        xmppRef.current.send(
+          xml("presence", { to: jid, type: "unsubscribed" })
+        );
+        console.log("Unsharing online status with", jid);
+      }
     }
   }, []);
+
+  const addContact = useCallback(
+    (jid: string, message: string, shareStatus: boolean = true) => {
+      if (xmppRef.current) {
+        // Sending the subscription request
+        xmppRef.current.send(
+          xml(
+            "presence",
+            { to: jid, type: "subscribe" },
+            xml("status", {}, message)
+          )
+        );
+        console.log(
+          "Sending contact request to",
+          jid,
+          "with message:",
+          message
+        );
+
+        // If the user wants to share their online status, call shareOnlineStatus
+        if (shareStatus) {
+          shareOnlineStatus(jid, true);
+        }
+      }
+    },
+    [shareOnlineStatus]
+  );
 
   const getContactDetails = useCallback(
     (jid: string) => contacts.find((contact) => contact.jid === jid),
