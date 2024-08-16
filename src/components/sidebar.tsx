@@ -1,4 +1,4 @@
-import { Bell, CirclePlus, SquarePen, UsersRound } from "lucide-react";
+import { Bell, CirclePlus, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ import AddContact from "./AddContact";
 import Inbox from "./Inbox";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 import { Skeleton } from "@/components/ui/skeleton";
+import AddConversation from "./addConversation";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -83,15 +84,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
               <PopoverContent align="end" className="max-w-[214px]">
                 <div className="grid gap-4">
                   <div className="grid gap-2 ">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1.5 items-center justify-start"
-                      onClick={() => {}}
-                    >
-                      <SquarePen size={20} />
-                      <span>Start Chat</span>
-                    </Button>
+                    <AddConversation />
                     <Button
                       variant="ghost"
                       size="sm"

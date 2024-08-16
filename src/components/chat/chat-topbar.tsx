@@ -76,6 +76,10 @@ export default function ChatTopbar() {
                       <span className="font-bold">show:</span>{" "}
                       {selectedContact.show}
                     </span>
+                    <span className="text-xs">
+                      <span className="font-bold">subscription:</span>{" "}
+                      {selectedContact.subscription}
+                    </span>
                   </div>
                 </div>
               </CardContent>

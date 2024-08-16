@@ -26,6 +26,7 @@ interface Contact {
   name: string;
   status: string;
   show: string;
+  subscription?: string;
 }
 
 // Define the shape of your context
@@ -64,6 +65,7 @@ interface XmppContextProps {
     domain: string;
     resource: string;
   };
+  addConversation: (jid: string) => void;
 }
 
 // Create the context
@@ -99,6 +101,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     gettingContacts,
     selectedContact,
     setSelectedContact,
+    addConversation,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -130,6 +133,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         selectedContact,
         setSelectedContact,
         globalXmppOptions,
+        addConversation,
       }}
     >
       {children}

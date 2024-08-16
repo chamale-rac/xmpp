@@ -15,6 +15,7 @@ interface Contact {
   name: string;
   status: string;
   show: string;
+  subscription?: string;
 }
 
 interface Message {
@@ -72,7 +73,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   }, []);
 
   const handleMAMResult = useCallback((stanza: any) => {
-    console.log("MAM stanza:", stanza.toString());
+    // console.log("MAM stanza:", stanza.toString());
 
     const result = stanza.getChild("result", "urn:xmpp:mam:2");
     const forwarded = result.getChild("forwarded", "urn:xmpp:forward:0");
@@ -96,7 +97,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         contactJid = from;
       }
 
-      console.log("MAM message:", { contactJid, from, to, body, timestamp });
+      // console.log("MAM message:", { contactJid, from, to, body, timestamp });
       setMessages((prevMessages) => {
         const newMessage = { id, from, to, body, timestamp };
         const existingMessages = prevMessages[contactJid] || [];
@@ -138,7 +139,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         setIsConnected(true);
         setStatusMessage("༼ つ ◕_◕ ༽つ");
         console.log("XMPP client is online");
-        requestRoster();
+        requestRoster(true);
       });
 
       xmppClient.on("offline", () => {
@@ -261,17 +262,22 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
-  const requestRoster = useCallback(() => {
-    if (xmppRef.current) {
-      setGettingContacts(true);
-      const rosterIQ = xml(
-        "iq",
-        { type: "get", id: "roster_1" },
-        xml("query", { xmlns: "jabber:iq:roster" })
-      );
-      xmppRef.current.send(rosterIQ);
-    }
-  }, []);
+  const requestRoster = useCallback(
+    (toggleGettingContacts: boolean = false) => {
+      if (xmppRef.current) {
+        if (toggleGettingContacts) {
+          setGettingContacts(true);
+        }
+        const rosterIQ = xml(
+          "iq",
+          { type: "get", id: "roster_1" },
+          xml("query", { xmlns: "jabber:iq:roster" })
+        );
+        xmppRef.current.send(rosterIQ);
+      }
+    },
+    []
+  );
 
   const handleRoster = (stanza: any) => {
     const items = stanza
@@ -281,9 +287,10 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     console.log("Roster:", items);
 
     setContacts((prevContacts) => {
-      const updatedContacts = [...prevContacts];
+      let updatedContacts = [...prevContacts];
       items.forEach((item: any) => {
         const jid = item.attrs.jid.split("/")[0];
+        const subscription = item.attrs.subscription;
         const name = item.attrs.name || item.attrs.jid.split("@")[0];
         const contactExists = prevContacts.some(
           (contact) => contact.jid === jid
@@ -294,6 +301,15 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
             name,
             status: "unknown",
             show: "unknown",
+            subscription,
+          });
+        } else {
+          // just update the subscription status
+          updatedContacts = updatedContacts.map((contact) => {
+            if (contact.jid === jid) {
+              return { ...contact, subscription };
+            }
+            return contact;
           });
         }
       });
@@ -315,24 +331,38 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     setGettingContacts(false);
   };
 
-  const acceptSubscription = useCallback((jid: string) => {
-    if (xmppRef.current) {
-      xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" }));
-      xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" }));
-      setSubscriptionRequests((prev) =>
-        prev.filter((request) => request.from !== jid)
-      );
-    }
-  }, []);
+  const acceptSubscription = useCallback(
+    (jid: string) => {
+      if (xmppRef.current) {
+        xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" }));
+        xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" }));
+        setSubscriptionRequests((prev) =>
+          prev.filter((request) => request.from !== jid)
+        );
 
-  const denySubscription = useCallback((jid: string) => {
-    if (xmppRef.current) {
-      xmppRef.current.send(xml("presence", { to: jid, type: "unsubscribed" }));
-      setSubscriptionRequests((prev) =>
-        prev.filter((request) => request.from !== jid)
-      );
-    }
-  }, []);
+        // requestRoster();
+        requestRoster();
+      }
+    },
+    [requestRoster]
+  );
+
+  const denySubscription = useCallback(
+    (jid: string) => {
+      if (xmppRef.current) {
+        xmppRef.current.send(
+          xml("presence", { to: jid, type: "unsubscribed" })
+        );
+        setSubscriptionRequests((prev) =>
+          prev.filter((request) => request.from !== jid)
+        );
+
+        // requestRoster();
+        requestRoster();
+      }
+    },
+    [requestRoster]
+  );
 
   const handleMessage = useCallback((stanza: any) => {
     const from = stanza.getAttr("from").split("/")[0];
@@ -426,9 +456,25 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         if (shareStatus) {
           shareOnlineStatus(jid, true);
         }
+
+        // requestRoster();
+        requestRoster();
       }
     },
-    [shareOnlineStatus]
+    [shareOnlineStatus, requestRoster]
+  );
+
+  const addConversation = useCallback(
+    (jid: string) => {
+      if (xmppRef.current) {
+        // Send a presence probe to check the contact's status
+        xmppRef.current.send(xml("presence", { to: jid, type: "probe" }));
+
+        // Update the roster after sending the probe
+        requestRoster();
+      }
+    },
+    [requestRoster]
   );
 
   const getContactDetails = useCallback(
@@ -500,5 +546,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     gettingContacts,
     selectedContact,
     setSelectedContact,
+    addConversation,
   };
 };
