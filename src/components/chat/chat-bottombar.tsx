@@ -10,10 +10,17 @@ import React, { useRef, useState } from "react";
 import { buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { Message, loggedInUserData } from "@/lib/data";
 import { Textarea } from "../ui/textarea";
 // import { EmojiPicker } from "../emoji-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { useXmpp } from "@/lib/hooks/useXmpp";
+
+interface Message {
+  from: string;
+  to: string;
+  body: string;
+  timestamp: Date;
+}
 
 interface ChatBottombarProps {
   sendMessage: (newMessage: Message) => void;
@@ -26,6 +33,7 @@ export default function ChatBottombar({
   sendMessage,
   isMobile,
 }: ChatBottombarProps) {
+  const { username, selectedContact } = useXmpp();
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,10 +43,10 @@ export default function ChatBottombar({
 
   const handleThumbsUp = () => {
     const newMessage: Message = {
-      id: message.length + 1,
-      name: loggedInUserData.name,
-      avatar: loggedInUserData.avatar,
-      message: `⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⢔⣒⠂⣀⣀⣤⣄⣀⠀⠀
+      timestamp: new Date(),
+      from: username,
+      to: selectedContact?.jid || "",
+      body: `⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⢔⣒⠂⣀⣀⣤⣄⣀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⣴⣿⠋⢠⣟⡼⣷⠼⣆⣼⢇⣿⣄⠱⣄
 ⠀⠀⠀⠀⠀⠀⠀⠹⣿⡀⣆⠙⠢⠐⠉⠉⣴⣾⣽⢟⡰⠃
 ⠀⠀⠀⠀⠀⠀⠀⠀⠈⢿⣿⣦⠀⠤⢴⣿⠿⢋⣴⡏⠀⠀
@@ -71,10 +79,10 @@ export default function ChatBottombar({
   const handleSend = () => {
     if (message.trim()) {
       const newMessage: Message = {
-        id: message.length + 1,
-        name: loggedInUserData.name,
-        avatar: loggedInUserData.avatar,
-        message: message.trim(),
+        timestamp: new Date(),
+        from: username,
+        to: selectedContact?.jid || "",
+        body: message.trim(),
       };
       sendMessage(newMessage);
       setMessage("");
@@ -100,21 +108,21 @@ export default function ChatBottombar({
   return (
     <div className="p-2 flex justify-between w-full items-center gap-2">
       <div className="flex">
-        <Popover>
-          <PopoverTrigger asChild>
-            <a
-              href="#"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-9 w-9",
-                "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-              )}
-            >
-              <PlusCircle size={20} className="text-muted-foreground" />
-            </a>
-          </PopoverTrigger>
-          <PopoverContent side="top" className="w-full p-2">
-            {message.trim() || isMobile ? (
+        {(message.trim() || isMobile) && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <a
+                href="#"
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "icon" }),
+                  "h-9 w-9",
+                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                )}
+              >
+                <PlusCircle size={20} className="text-muted-foreground" />
+              </a>
+            </PopoverTrigger>
+            <PopoverContent side="top" className="w-full p-2">
               <div className="flex gap-2">
                 <a
                   href="#"
@@ -140,20 +148,9 @@ export default function ChatBottombar({
                   </a>
                 ))}
               </div>
-            ) : (
-              <a
-                href="#"
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
-                  "h-9 w-9",
-                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-                )}
-              >
-                <Mic size={20} className="text-muted-foreground" />
-              </a>
-            )}
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+        )}
         {!message.trim() && !isMobile && (
           <div className="flex">
             {BottombarIcons.map((icon, index) => (

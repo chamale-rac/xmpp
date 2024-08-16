@@ -1,23 +1,26 @@
-import { Message, UserData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import React, { useRef } from "react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import ChatBottombar from "./chat-bottombar";
 import { AnimatePresence, motion } from "framer-motion";
+import { useXmpp } from "@/lib/hooks/useXmpp";
+
+interface Message {
+  from: string;
+  to: string;
+  body: string;
+  timestamp: Date;
+}
 
 interface ChatListProps {
   messages?: Message[];
-  selectedUser: UserData;
   sendMessage: (newMessage: Message) => void;
   isMobile: boolean;
 }
 
-export function ChatList({
-  messages,
-  selectedUser,
-  sendMessage,
-  isMobile,
-}: ChatListProps) {
+export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
+  const { username, globalXmppOptions } = useXmpp();
+
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -55,29 +58,31 @@ export function ChatList({
               }}
               className={cn(
                 "flex flex-col gap-2 p-4 whitespace-pre-wrap",
-                message.name !== selectedUser.name ? "items-end" : "items-start"
+                message.from === username + "@" + globalXmppOptions.domain
+                  ? "items-end"
+                  : "items-start"
               )}
             >
               <div className="flex gap-3 items-center">
-                {message.name === selectedUser.name && (
+                {message.from !== username + "@" + globalXmppOptions.domain && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarFallback>
                       {
                         // Get the first letter of the first word in the name
-                        message.name.split(" ")[0][0]
+                        message.from.split(" ")[0][0].toLocaleUpperCase()
                       }
                     </AvatarFallback>
                   </Avatar>
                 )}
                 <span className=" bg-accent p-3 rounded-md max-w-xs">
-                  {message.message}
+                  {message.body}
                 </span>
-                {message.name !== selectedUser.name && (
+                {message.from === username + "@" + globalXmppOptions.domain && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarFallback>
                       {
                         // Get the first letter of the first word in the name
-                        message.name.split(" ")[0][0]
+                        message.from.split(" ")[0][0].toLocaleUpperCase()
                       }
                     </AvatarFallback>
                   </Avatar>

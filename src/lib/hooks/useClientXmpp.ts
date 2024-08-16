@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { client, xml } from "@xmpp/client";
 import debug from "@xmpp/debug";
+import { v4 as uuidv4 } from "uuid";
 
 interface XmppConnectionOptions {
   service: string;
@@ -21,6 +22,7 @@ interface Message {
   to: string;
   body: string;
   timestamp: Date;
+  id: string;
 }
 
 interface Notification {
@@ -32,7 +34,10 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>();
   const [isConnected, setIsConnected] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<{ [jid: string]: Message[] }>({});
+  const [historyFetched, setHistoryFetched] = useState<{
+    [jid: string]: boolean;
+  }>({});
   const [gettingContacts, setGettingContacts] = useState(true);
   const [subscriptionRequests, setSubscriptionRequests] = useState<
     Notification[]
@@ -41,21 +46,77 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [statusMessageState, setStatusMessageState] = useState("༼ つ ◕_◕ ༽つ");
   const xmppRef = useRef<any>(null); // Use ref to store the XMPP client
   const [username, setUsername] = useState("");
+  const usernameRef = useRef("");
+
+  useEffect(() => {
+    usernameRef.current = username;
+  }, [username]);
 
   const handleStanza = useCallback((stanza: any) => {
     if (stanza.is("presence")) {
       handlePresence(stanza);
     } else if (stanza.is("message")) {
-      handleMessage(stanza);
+      if (stanza.getChild("result", "urn:xmpp:mam:2")) {
+        handleMAMResult(stanza);
+      } else {
+        handleMessage(stanza);
+      }
     } else if (
       stanza.is("iq") &&
       stanza.getChild("query", "jabber:iq:roster")
     ) {
       handleRoster(stanza);
     } else {
-      // console.log("Unhandled stanza:", stanza.toString());
+      console.log("Unhandled stanza:", stanza.toString());
     }
   }, []);
+
+  const handleMAMResult = useCallback((stanza: any) => {
+    console.log("MAM stanza:", stanza.toString());
+
+    const result = stanza.getChild("result", "urn:xmpp:mam:2");
+    const forwarded = result.getChild("forwarded", "urn:xmpp:forward:0");
+    const message = forwarded.getChild("message", "jabber:client");
+    const id = message.getAttr("id");
+    const body = message.getChildText("body");
+    const from = message.getAttr("from").split("/")[0];
+    const to = message.getAttr("to").split("/")[0];
+    const timestamp = new Date(
+      forwarded.getChild("delay", "urn:xmpp:delay").getAttr("stamp")
+    );
+
+    if (body) {
+      let contactJid;
+
+      // Ensure the contactJid is the JID of the contact, not the user
+      // console.log("username", usernameRef.current + "@" + xmppOptions.domain);
+      if (from === usernameRef.current + "@" + xmppOptions.domain) {
+        contactJid = to;
+      } else {
+        contactJid = from;
+      }
+
+      console.log("MAM message:", { contactJid, from, to, body, timestamp });
+      setMessages((prevMessages) => {
+        const newMessage = { id, from, to, body, timestamp };
+        const existingMessages = prevMessages[contactJid] || [];
+
+        // Check if the message already exists
+        const messageExists = existingMessages.some((m) => m.id === id);
+
+        // If the message exists, return the previous state
+        if (messageExists) {
+          return prevMessages;
+        }
+
+        // Otherwise, add the new message
+        return {
+          ...prevMessages,
+          [contactJid]: [...existingMessages, newMessage],
+        };
+      });
+    }
+  }, []); // Include username in the dependencies array
 
   const triggerConnection = useCallback(
     async (username: string, password: string) => {
@@ -106,41 +167,60 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     };
   }, []);
 
-  const requestRoster = useCallback(() => {
+  // Request message history when selectedContact changes
+  useEffect(() => {
+    if (selectedContact && !historyFetched[selectedContact.jid]) {
+      getMessageHistory(selectedContact.jid);
+      setHistoryFetched((prev) => ({
+        ...prev,
+        [selectedContact.jid]: true,
+      }));
+    }
+  }, [selectedContact, historyFetched]);
+
+  const getMessageHistory = useCallback((jid: string) => {
     if (xmppRef.current) {
-      setGettingContacts(true);
-      const rosterIQ = xml(
+      // Constructing the MAM query
+      const mamQuery = xml(
         "iq",
-        { type: "get", id: "roster_1" },
-        xml("query", { xmlns: "jabber:iq:roster" })
+        { type: "set", id: "mam_1", from: xmppRef.current.jid },
+        xml(
+          "query",
+          { xmlns: "urn:xmpp:mam:2" },
+          xml(
+            "x",
+            { xmlns: "jabber:x:data", type: "submit" },
+            xml(
+              "field",
+              { var: "FORM_TYPE", type: "hidden" },
+              xml("value", {}, "urn:xmpp:mam:2")
+            ),
+            xml("field", { var: "with" }, xml("value", {}, jid))
+          )
+        )
       );
-      xmppRef.current.send(rosterIQ);
+
+      // Sending the MAM query
+      xmppRef.current.send(mamQuery);
     }
   }, []);
 
   const handlePresence = useCallback((stanza: any) => {
-    console.log("Presence stanza:", stanza.toString());
     const from = stanza.getAttr("from").split("/")[0];
     const type = stanza.getAttr("type");
-    const status = stanza.getChildText("status") || "online";
+    let status = stanza.getChildText("status") || "online";
     let show = stanza.getChildText("show") || "chat";
 
-    if (status === "offline") {
+    if (type === "unavailable") {
+      status = "";
       show = "offline";
     }
+
+    console.log("Presence:", { from, type, status, show });
 
     if (type === "subscribe") {
       setSubscriptionRequests((prev) => [...prev, { from, message: status }]);
     } else {
-      console.log(
-        "Presence from",
-        from,
-        "with status",
-        status,
-        "and show",
-        show
-      );
-
       setContacts((prevContacts) => {
         const contactExists = prevContacts.some(
           (contact) => contact.jid === from
@@ -167,13 +247,39 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         }
         return prev;
       });
+
+      // Create an empty message array for the contact if it doesn't exist, only if still this not exists, all inside the setMessages
+      setMessages((prevMessages) => {
+        if (!prevMessages[from]) {
+          return {
+            ...prevMessages,
+            [from]: [],
+          };
+        }
+        return prevMessages;
+      });
     }
-  }, []); // Remove selectedContact from dependencies
+  }, []);
+
+  const requestRoster = useCallback(() => {
+    if (xmppRef.current) {
+      setGettingContacts(true);
+      const rosterIQ = xml(
+        "iq",
+        { type: "get", id: "roster_1" },
+        xml("query", { xmlns: "jabber:iq:roster" })
+      );
+      xmppRef.current.send(rosterIQ);
+    }
+  }, []);
 
   const handleRoster = (stanza: any) => {
     const items = stanza
       .getChild("query", "jabber:iq:roster")
       .getChildren("item");
+
+    console.log("Roster:", items);
+
     setContacts((prevContacts) => {
       const updatedContacts = [...prevContacts];
       items.forEach((item: any) => {
@@ -193,15 +299,26 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       });
       return updatedContacts;
     });
+
+    // Create an empty message array for the contact if it doesn't exist, only if still this not exists, all inside the setMessages
+    setMessages((prevMessages) => {
+      const updatedMessages = { ...prevMessages };
+      items.forEach((item: any) => {
+        const jid = item.attrs.jid.split("/")[0];
+        if (!updatedMessages[jid]) {
+          updatedMessages[jid] = [];
+        }
+      });
+      return updatedMessages;
+    });
+
     setGettingContacts(false);
   };
 
   const acceptSubscription = useCallback((jid: string) => {
     if (xmppRef.current) {
       xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" }));
-      // TODO: Consider removing subscribe back
       xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" }));
-      // Remove the request from the pending list
       setSubscriptionRequests((prev) =>
         prev.filter((request) => request.from !== jid)
       );
@@ -211,40 +328,86 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const denySubscription = useCallback((jid: string) => {
     if (xmppRef.current) {
       xmppRef.current.send(xml("presence", { to: jid, type: "unsubscribed" }));
-      // Remove the request from the pending list
       setSubscriptionRequests((prev) =>
         prev.filter((request) => request.from !== jid)
       );
     }
   }, []);
 
-  const handleMessage = (stanza: any) => {
-    const from = stanza.getAttr("from");
-    const to = stanza.getAttr("to");
+  const handleMessage = useCallback((stanza: any) => {
+    const from = stanza.getAttr("from").split("/")[0];
+    const to = stanza.getAttr("to").split("/")[0];
+    const id = stanza.getAttr("id");
     const body = stanza.getChildText("body");
 
     if (body) {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { from, to, body, timestamp: new Date() },
-      ]);
-    }
-  };
+      let contactJid;
 
-  // const getContacts = useCallback(() => contacts, [contacts]);
+      // Ensure the contactJid is the JID of the contact, not the user
+      // console.log("username", usernameRef.current + "@" + xmppOptions.domain);
+      if (from === usernameRef.current + "@" + xmppOptions.domain) {
+        contactJid = to;
+      } else {
+        contactJid = from;
+      }
+
+      // console.log("Message:", { contactJid, from, to, body });
+      setMessages((prevMessages) => {
+        const newMessage = { id, from, to, body, timestamp: new Date() };
+        const existingMessages = prevMessages[contactJid] || [];
+
+        // Check if the message already exists
+        const messageExists = existingMessages.some((m) => m.id === id);
+
+        // If the message exists, return the previous state
+        if (messageExists) {
+          return prevMessages;
+        }
+
+        // Otherwise, add the new message
+        return {
+          ...prevMessages,
+          [contactJid]: [...existingMessages, newMessage],
+        };
+      });
+    }
+  }, []);
+
+  const sendMessage = useCallback((to: string, body: string) => {
+    if (xmppRef.current) {
+      const id = uuidv4();
+
+      const messageStanza = xml(
+        "message",
+        { to, type: "chat", id },
+        xml("body", {}, body)
+      );
+      xmppRef.current.send(messageStanza);
+      // Save the message to the local state immediately
+      setMessages((prevMessages) => ({
+        ...prevMessages,
+        [to]: [
+          ...(prevMessages[to] || []),
+          {
+            from: usernameRef.current + "@" + xmppOptions.domain,
+            to,
+            body,
+            timestamp: new Date(),
+            id,
+          },
+        ],
+      }));
+    }
+  }, []);
 
   const shareOnlineStatus = useCallback((jid: string, activate: boolean) => {
     if (xmppRef.current) {
       if (activate) {
-        // Send "subscribed" presence to share online status
         xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" }));
-        console.log("Sharing online status with", jid);
       } else {
-        // Send "unsubscribed" presence to stop sharing online status
         xmppRef.current.send(
           xml("presence", { to: jid, type: "unsubscribed" })
         );
-        console.log("Unsharing online status with", jid);
       }
     }
   }, []);
@@ -252,7 +415,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const addContact = useCallback(
     (jid: string, message: string, shareStatus: boolean = true) => {
       if (xmppRef.current) {
-        // Sending the subscription request
         xmppRef.current.send(
           xml(
             "presence",
@@ -260,14 +422,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
             xml("status", {}, message)
           )
         );
-        console.log(
-          "Sending contact request to",
-          jid,
-          "with message:",
-          message
-        );
 
-        // If the user wants to share their online status, call shareOnlineStatus
         if (shareStatus) {
           shareOnlineStatus(jid, true);
         }
@@ -281,14 +436,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     [contacts]
   );
 
-  const sendMessage = useCallback((to: string, body: string) => {
-    if (xmppRef.current) {
-      xmppRef.current.send(
-        xml("message", { to, type: "chat" }, xml("body", {}, body))
-      );
-    }
-  }, []);
-
   const joinGroupChat = useCallback((roomJid: string, nickname: string) => {
     if (xmppRef.current) {
       xmppRef.current.send(
@@ -301,7 +448,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
-  // Show types obtained from https://slixmpp.readthedocs.io/en/slix-1.5.1/api/stanza/presence.html https://xmpp.org/rfcs/rfc3921.html
   const setPresence = useCallback(
     (status: "away" | "chat" | "dnd" | "xa") => {
       if (xmppRef.current) {
@@ -312,8 +458,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
           xml("status", {}, statusMessageState)
         );
         xmppRef.current.send(presenceXML);
-        console.log("Setting presence to", status);
-        console.log("Presence XML:", presenceXML.toString());
         setStatus(status);
       }
     },
@@ -330,8 +474,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
           xml("status", {}, message)
         );
         xmppRef.current.send(presenceXML);
-        console.log("Status message set to", message);
-        console.log("Status message XML:", presenceXML.toString());
         setStatusMessageState(message);
       }
     },

@@ -9,6 +9,13 @@ const globalXmppOptions = {
   resource: "",
 };
 
+interface Message {
+  from: string;
+  to: string;
+  body: string;
+  timestamp: Date;
+}
+
 interface Notification {
   from: string;
   message: string;
@@ -38,7 +45,7 @@ interface XmppContextProps {
   setPresence: (status: "away" | "chat" | "dnd" | "xa") => void;
   setStatusMessage: (message: string) => void;
   triggerConnection: (username: string, password: string) => void;
-  messages: any[];
+  messages: { [jid: string]: Message[] };
   validUser: string | undefined;
   validPassword: string | undefined;
   setValidUser: (user: string) => void;
@@ -52,6 +59,11 @@ interface XmppContextProps {
   gettingContacts: boolean;
   selectedContact: Contact | undefined;
   setSelectedContact: (user: Contact) => void;
+  globalXmppOptions: {
+    service: string;
+    domain: string;
+    resource: string;
+  };
 }
 
 // Create the context
@@ -80,9 +92,9 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     status,
     statusMessageState,
     username,
+    subscriptionRequests,
     acceptSubscription,
     denySubscription,
-    subscriptionRequests,
     contacts,
     gettingContacts,
     selectedContact,
@@ -92,10 +104,10 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
   return (
     <XmppContext.Provider
       value={{
+        isConnected,
         contacts,
         registerXmppUser,
         checkXmppUser,
-        isConnected,
         addContact,
         getContactDetails,
         sendMessage,
@@ -117,6 +129,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         gettingContacts,
         selectedContact,
         setSelectedContact,
+        globalXmppOptions,
       }}
     >
       {children}
