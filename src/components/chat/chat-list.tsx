@@ -18,6 +18,25 @@ interface ChatListProps {
   isMobile: boolean;
 }
 
+// Function to parse and convert URLs to anchor tags or image previews
+const linkify = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
+
+  return text.replace(urlRegex, (url) => {
+    // Check if the URL is an image
+    if (imageExtensions.some((ext) => url.toLowerCase().includes(ext))) {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">${url}</a>
+        <img src="${url}" alt="Image preview" class="max-w-[18rem] rounded-md mt-2" />
+      `;
+    } else {
+      // Fallback for non-image files
+      const fileName = url.split("/").pop();
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">${fileName}</a>`;
+    }
+  });
+};
+
 export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
   const { username, globalXmppOptions } = useXmpp();
 
@@ -74,9 +93,10 @@ export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <span className=" bg-accent p-3 rounded-md max-w-xs">
-                  {message.body}
-                </span>
+                <div
+                  className="bg-accent p-3 rounded-md max-w-xs break-words"
+                  dangerouslySetInnerHTML={{ __html: linkify(message.body) }}
+                />
                 {message.from === username + "@" + globalXmppOptions.domain && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarFallback>

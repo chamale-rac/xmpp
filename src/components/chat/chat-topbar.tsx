@@ -26,7 +26,8 @@ export default function ChatTopbar() {
           <AvatarFallback>
             {
               // Get the first letter of the first word in the name
-              selectedContact.name.split(" ")[0][0].toLocaleUpperCase()
+              selectedContact.name &&
+                selectedContact.name.split(" ")[0][0].toLocaleUpperCase()
             }
           </AvatarFallback>
         </Avatar>
@@ -70,7 +71,9 @@ export default function ChatTopbar() {
                     </span>
                     <span className="text-xs">
                       <span className="font-bold">status:</span>{" "}
-                      {selectedContact.status}
+                      {selectedContact.status
+                        ? selectedContact.status
+                        : "unknown"}
                     </span>
                     <span className="text-xs">
                       <span className="font-bold">show:</span>{" "}

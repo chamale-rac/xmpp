@@ -54,7 +54,7 @@ const Login = () => {
 
   return (
     <MaxWidthWrapper className="flex h-dvh items-center justify-center">
-      <Card className="mx-auto max-w-sm mix-blend-exclusion">
+      <Card className="mx-auto max-w-sm ">
         <CardHeader>
           <CardTitle className="text-2xl ">Login</CardTitle>
           <CardDescription>

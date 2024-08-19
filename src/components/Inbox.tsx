@@ -30,7 +30,7 @@ const Inbox = () => {
               "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
               "gap-4 px-4 w-full my-2"
             )}
-            key={request.from}
+            key={request.from + request.message}
           >
             <TooltipProvider key={request.from}>
               <Tooltip key={request.from} delayDuration={800}>

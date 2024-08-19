@@ -23,10 +23,11 @@ interface Notification {
 
 interface Contact {
   jid: string;
-  name: string;
-  status: string;
-  show: string;
+  name?: string;
+  status?: string;
+  show?: string;
   subscription?: string;
+  pfp?: string;
 }
 
 // Define the shape of your context
@@ -66,6 +67,7 @@ interface XmppContextProps {
     resource: string;
   };
   addConversation: (jid: string) => void;
+  requestUploadSlot: (file: File, to: string) => void;
 }
 
 // Create the context
@@ -102,6 +104,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     selectedContact,
     setSelectedContact,
     addConversation,
+    requestUploadSlot,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -134,6 +137,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         setSelectedContact,
         globalXmppOptions,
         addConversation,
+        requestUploadSlot,
       }}
     >
       {children}

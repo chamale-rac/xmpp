@@ -12,10 +12,11 @@ interface XmppConnectionOptions {
 
 interface Contact {
   jid: string;
-  name: string;
-  status: string;
-  show: string;
+  name?: string;
+  status?: string;
+  show?: string;
   subscription?: string;
+  pfp?: string;
 }
 
 interface Message {
@@ -29,6 +30,12 @@ interface Message {
 interface Notification {
   from: string;
   message: string;
+}
+
+interface XMPPFile {
+  id: string;
+  file: File;
+  to: string;
 }
 
 export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
@@ -48,6 +55,12 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const xmppRef = useRef<any>(null); // Use ref to store the XMPP client
   const [username, setUsername] = useState("");
   const usernameRef = useRef("");
+  const [filesToBeUploaded, setFilesToBeUploaded] = useState<XMPPFile[]>([]);
+  const filesToBeUploadedRef = useRef<XMPPFile[]>([]);
+
+  useEffect(() => {
+    filesToBeUploadedRef.current = filesToBeUploaded;
+  }, [filesToBeUploaded]);
 
   useEffect(() => {
     usernameRef.current = username;
@@ -59,16 +72,53 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     } else if (stanza.is("message")) {
       if (stanza.getChild("result", "urn:xmpp:mam:2")) {
         handleMAMResult(stanza);
+      } else if (stanza.getChild("event")) {
+        handlePfp(stanza);
       } else {
         handleMessage(stanza);
       }
-    } else if (
-      stanza.is("iq") &&
-      stanza.getChild("query", "jabber:iq:roster")
-    ) {
-      handleRoster(stanza);
+    } else if (stanza.is("iq")) {
+      const id = stanza.getAttr("id");
+      if (stanza.getChild("query", "jabber:iq:roster")) {
+        handleRoster(stanza);
+      } else if (filesToBeUploadedRef.current.some((file) => file.id === id)) {
+        handleUploadFile(stanza);
+      } else {
+        console.log("Unhandled stanza iq:", stanza.toString());
+      }
     } else {
       console.log("Unhandled stanza:", stanza.toString());
+    }
+  }, []);
+
+  const handlePfp = useCallback((stanza: any) => {
+    const from = stanza.getAttr("from").split("/")[0];
+    const data = stanza
+      .getChild("event")
+      .getChild("items")
+      .getChild("item")
+      .getChild("data");
+
+    if (data) {
+      const pfpBase64 = data.text();
+      const pfp = `data:image/jpeg;base64,${pfpBase64}`;
+
+      // If the contact already exists, update the pfp, if not create a new contact
+      setContacts((prevContacts) => {
+        const contactExists = prevContacts.some(
+          (contact) => contact.jid === from
+        );
+        if (contactExists) {
+          return prevContacts.map((contact) =>
+            contact.jid === from ? { ...contact, pfp } : contact
+          );
+        } else {
+          return [
+            ...prevContacts,
+            { jid: from, name: from.split("@")[0], pfp },
+          ];
+        }
+      });
     }
   }, []);
 
@@ -217,8 +267,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       show = "offline";
     }
 
-    console.log("Presence:", { from, type, status, show });
-
     if (type === "subscribe") {
       setSubscriptionRequests((prev) => [...prev, { from, message: status }]);
     } else {
@@ -228,7 +276,9 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         );
         if (contactExists) {
           return prevContacts.map((contact) =>
-            contact.jid === from ? { ...contact, status, show } : contact
+            contact.jid === from
+              ? { ...contact, name: from.split("@")[0], status, show }
+              : contact
           );
         } else {
           return [
@@ -284,8 +334,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       .getChild("query", "jabber:iq:roster")
       .getChildren("item");
 
-    console.log("Roster:", items);
-
     setContacts((prevContacts) => {
       let updatedContacts = [...prevContacts];
       items.forEach((item: any) => {
@@ -299,8 +347,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
           updatedContacts.push({
             jid,
             name,
-            status: "unknown",
-            show: "unknown",
             subscription,
           });
         } else {
@@ -526,6 +572,85 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     [status]
   );
 
+  {
+    /** FILE UPLOAD FUNCTIONS */
+  }
+
+  const requestUploadSlot = useCallback((file: File, to: string) => {
+    if (xmppRef.current) {
+      const id = uuidv4(); // Unique ID for this file
+      const size = file.size;
+      const filename = file.name;
+      const contentType = file.type || "application/octet-stream";
+
+      // Add file to filesToBeUploaded with its unique ID
+      setFilesToBeUploaded((prev) => [...prev, { id, file, to }]);
+
+      // Send the request for an upload slot
+      const uploadSlotRequest = xml(
+        "iq",
+        { type: "get", id, to: "httpfileupload.alumchat.lol" }, // Adjust with the correct upload service JID
+        xml("request", {
+          xmlns: "urn:xmpp:http:upload:0",
+          filename,
+          size: size.toString(),
+          "content-type": contentType,
+        })
+      );
+
+      xmppRef.current.send(uploadSlotRequest);
+    }
+  }, []);
+
+  const handleUploadFile = useCallback(
+    (stanza: any) => {
+      const id = stanza.getAttr("id");
+
+      const slot = stanza.getChild("slot", "urn:xmpp:http:upload:0");
+      if (slot) {
+        const putUrl = slot.getChild("put").getAttr("url");
+        const getUrl = slot.getChild("get").getAttr("url");
+
+        // Find the file in the filesToBeUploadedRef
+        const fileToUpload = filesToBeUploadedRef.current.find(
+          (file) => file.id === id
+        );
+        if (fileToUpload) {
+          // Upload the file
+          uploadFileToUrl(putUrl, fileToUpload.file).then(() => {
+            // Send the message with the file URL
+            sendMessage(fileToUpload.to, `File: ${getUrl}`);
+
+            // Remove the file from the filesToBeUploaded state
+            setFilesToBeUploaded((prev) =>
+              prev.filter((file) => file.id !== id)
+            );
+          });
+        }
+      }
+    },
+    [sendMessage]
+  );
+
+  const uploadFileToUrl = async (putUrl: string, file: File) => {
+    try {
+      const response = await fetch(putUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+          "Content-Length": file.size.toString(),
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Failed to upload file:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
+
   return {
     isConnected,
     addContact,
@@ -547,5 +672,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     selectedContact,
     setSelectedContact,
     addConversation,
+    requestUploadSlot,
   };
 };

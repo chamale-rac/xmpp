@@ -19,7 +19,7 @@ import AddContact from "./AddContact";
 import Inbox from "./Inbox";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 import { Skeleton } from "@/components/ui/skeleton";
-import AddConversation from "./addConversation";
+import AddConversation from "./AddConversation";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -105,7 +105,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2 overflow-y-auto overflow-x-hidden">
         {gettingContacts ? (
           isCollapsed ? (
-            Array.from({ length: 5 }).map((_, index) => (
+            Array.from({ length: 10 }).map((_, index) => (
               <div key={index} className="h-11 w-11 md:h-16 md:w-16">
                 <div className="w-full h-full p-3 flex items-center justify-center">
                   <Skeleton className="rounded-3xl h-9 w-9" />
@@ -113,7 +113,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
               </div>
             ))
           ) : (
-            Array.from({ length: 5 }).map((_, index) => (
+            Array.from({ length: 10 }).map((_, index) => (
               <div key={index} className="h-16 rounded-md px-5 mt-1">
                 <div className="flex gap-4 items-center">
                   <Skeleton className="h-11 w-11 rounded-3xl" />
@@ -142,9 +142,18 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                       onClick={() => setSelectedContact(contact)}
                     >
                       <Avatar className="flex justify-center items-center  rounded-3xl border">
-                        <AvatarFallback>
-                          {contact.name.split(" ")[0][0].toLocaleUpperCase()}
-                        </AvatarFallback>
+                        {contact.pfp ? (
+                          <img
+                            src={contact.pfp}
+                            alt={contact.name}
+                            className="rounded-3xl"
+                          />
+                        ) : (
+                          <AvatarFallback>
+                            {contact.name &&
+                              contact.name.split(" ")[0][0].toLocaleUpperCase()}
+                          </AvatarFallback>
+                        )}
                       </Avatar>{" "}
                       <span className="sr-only">{contact.name}</span>
                     </a>
@@ -169,7 +178,18 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
               >
                 <Avatar className="flex justify-center items-center rounded-3xl border">
                   <AvatarFallback>
-                    {contact.name.split(" ")[0][0].toLocaleUpperCase()}
+                    {contact.pfp ? (
+                      <img
+                        src={contact.pfp}
+                        alt={contact.name}
+                        className="rounded-3xl"
+                      />
+                    ) : (
+                      <AvatarFallback>
+                        {contact.name &&
+                          contact.name.split(" ")[0][0].toLocaleUpperCase()}
+                      </AvatarFallback>
+                    )}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col max-w-28">

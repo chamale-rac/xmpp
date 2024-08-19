@@ -36,7 +36,7 @@ export default function Home() {
         <a
           onClick={() => setPresence("away")}
           href="#"
-          className="text-4xl font-bold text-gradient mix-blend-exclusion"
+          className="text-4xl font-bold text-gradient"
         >
           xmpp ༼ つ ◕_◕ ༽つ
         </a>
@@ -46,14 +46,14 @@ export default function Home() {
           href="https://github.com/chamale-rac/xmpp"
           className={cn(
             buttonVariants({ variant: "ghost", size: "icon" }),
-            "h-10 w-10 mix-blend-exclusion"
+            "h-10 w-10"
           )}
         >
           <GitHubLogoIcon className="w-7 h-7 text-muted-foreground" />
         </a>
       </div>
 
-      <div className="z-10 border rounded-lg max-w-5xl w-full h-full text-sm lg:flex mix-blend-exclusion">
+      <div className="z-10 border rounded-lg max-w-5xl w-full h-full text-sm lg:flex">
         <ChatLayout defaultLayout={defaultLayout} navCollapsedSize={8} />
       </div>
 
