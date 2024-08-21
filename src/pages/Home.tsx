@@ -13,12 +13,12 @@ interface testCredentials {
 }
 
 const testCredentials: testCredentials = {
-  username: "cha21881",
+  username: "cha21881clean",
   password: "admin",
 };
 
 export default function Home() {
-  const { isConnected, triggerConnection, setPresence } = useXmpp();
+  const { isConnected, triggerConnection } = useXmpp();
 
   useEffect(() => {
     if (!isConnected) {
@@ -33,11 +33,7 @@ export default function Home() {
   return (
     <main className="flex h-[calc(100dvh)] flex-col items-center justify-center p-4 md:px-24 py-32 gap-4">
       <div className="flex justify-between max-w-5xl w-full items-center">
-        <a
-          onClick={() => setPresence("away")}
-          href="#"
-          className="text-4xl font-bold text-gradient"
-        >
+        <a href="#" className="text-4xl font-bold text-gradient">
           xmpp ༼ つ ◕_◕ ༽つ
         </a>
         {/* https://tailwindcss.com/docs/mix-blend-mode */}

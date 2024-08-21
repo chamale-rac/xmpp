@@ -1,4 +1,3 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -37,12 +36,14 @@ const router = createBrowserRouter([
 ]);
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <XmppProvider>
-      <RouterProvider router={router} />
-      <Toaster />
-    </XmppProvider>
-    {/* <AnimatedCursor
+  <XmppProvider>
+    <RouterProvider router={router} />
+    <Toaster />
+  </XmppProvider>
+);
+
+{
+  /* <AnimatedCursor
       innerSize={8}
       outerSize={20} // Original 35
       innerScale={1}
@@ -56,6 +57,5 @@ createRoot(document.getElementById("root")!).render(
         backgroundColor: "#f0f0f0",
         mixBlendMode: "exclusion",
       }}
-    /> */}
-  </StrictMode>
-);
+    /> */
+}

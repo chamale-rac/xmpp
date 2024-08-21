@@ -153,9 +153,8 @@ const Profile = ({
                   <SelectLabel>Status</SelectLabel>
                   <SelectItem value="chat">chat</SelectItem>
                   <SelectItem value="dnd">dnd</SelectItem>
-                  {/* <SelectItem value="away">away</SelectItem> */}
-                  {/*
-                  <SelectItem value="xa">eXtended Away</SelectItem> */}
+                  <SelectItem value="away">away</SelectItem>
+                  <SelectItem value="xa">eXtended Away</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>

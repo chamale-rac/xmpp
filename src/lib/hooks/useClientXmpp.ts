@@ -128,7 +128,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     const result = stanza.getChild("result", "urn:xmpp:mam:2");
     const forwarded = result.getChild("forwarded", "urn:xmpp:forward:0");
     const message = forwarded.getChild("message", "jabber:client");
-    const id = message.getAttr("id");
+    let id = message.getAttr("id");
     const body = message.getChildText("body");
     const from = message.getAttr("from").split("/")[0];
     const to = message.getAttr("to").split("/")[0];
@@ -145,6 +145,11 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         contactJid = to;
       } else {
         contactJid = from;
+      }
+
+      // If not has id, generate one
+      if (!id) {
+        id = uuidv4();
       }
 
       // console.log("MAM message:", { contactJid, from, to, body, timestamp });
@@ -185,10 +190,20 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       const xmppClient = client(xmppConnectionOptions);
       debug(xmppClient, true);
 
+      // Remove existing event listeners to prevent duplicate handling
+      xmppClient.removeAllListeners("online");
+      xmppClient.removeAllListeners("offline");
+      xmppClient.removeAllListeners("stanza");
+
       xmppClient.on("online", () => {
         setIsConnected(true);
-        setStatusMessage("༼ つ ◕_◕ ༽つ");
+
+        if (!xmppRef.current) {
+          console.error("XMPP client is not available");
+        }
+
         console.log("XMPP client is online");
+        setStatusMessage("༼ つ ◕_◕ ༽つ");
         requestRoster(true);
       });
 
@@ -200,7 +215,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       xmppClient.on("stanza", handleStanza);
 
       try {
-        await xmppClient.start();
+        xmppClient.start();
         xmppRef.current = xmppClient; // Store the client instance in the ref
       } catch (error) {
         console.error("Failed to start XMPP client:", error);
@@ -299,7 +314,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         return prev;
       });
 
-      // Create an empty message array for the contact if it doesn't exist, only if still this not exists, all inside the setMessages
+      // Create an empty message array for the contact if it doesn't exist, only if still this not exists, all inside
       setMessages((prevMessages) => {
         if (!prevMessages[from]) {
           return {
@@ -362,7 +377,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       return updatedContacts;
     });
 
-    // Create an empty message array for the contact if it doesn't exist, only if still this not exists, all inside the setMessages
+    // Create an empty message array for the contact if it doesn't exist, only if still this not exists, all inside
     setMessages((prevMessages) => {
       const updatedMessages = { ...prevMessages };
       items.forEach((item: any) => {
@@ -413,7 +428,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const handleMessage = useCallback((stanza: any) => {
     const from = stanza.getAttr("from").split("/")[0];
     const to = stanza.getAttr("to").split("/")[0];
-    const id = stanza.getAttr("id");
+    let id = stanza.getAttr("id");
     const body = stanza.getChildText("body");
 
     if (body) {
@@ -425,6 +440,10 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         contactJid = to;
       } else {
         contactJid = from;
+      }
+
+      if (!id) {
+        id = uuidv4();
       }
 
       // console.log("Message:", { contactJid, from, to, body });
@@ -549,6 +568,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
           xml("show", {}, status),
           xml("status", {}, statusMessageState)
         );
+        console.log(presenceXML);
         xmppRef.current.send(presenceXML);
         setStatus(status);
       }
@@ -558,6 +578,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
   const setStatusMessage = useCallback(
     (message: string) => {
+      console.log("Setting status message:", message);
       if (xmppRef.current) {
         const presenceXML = xml(
           "presence",

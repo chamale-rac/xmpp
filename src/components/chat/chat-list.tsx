@@ -27,7 +27,7 @@ const linkify = (text: string) => {
     // Check if the URL is an image
     if (imageExtensions.some((ext) => url.toLowerCase().includes(ext))) {
       return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">${url}</a>
-        <img src="${url}" alt="Image preview" class="max-w-[18rem] rounded-md mt-2" />
+        <img src="${url}" alt="Image preview" class="w-fit rounded-md mt-2" />
       `;
     } else {
       // Fallback for non-image files
@@ -94,7 +94,7 @@ export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
                   </Avatar>
                 )}
                 <div
-                  className="bg-accent p-3 rounded-md max-w-xs break-words"
+                  className="bg-accent p-3 rounded-md break-words max-w-48 md:max-w-xs"
                   dangerouslySetInnerHTML={{ __html: linkify(message.body) }}
                 />
                 {message.from === username + "@" + globalXmppOptions.domain && (
