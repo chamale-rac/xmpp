@@ -7,6 +7,8 @@ const globalXmppOptions = {
   service: "ws://alumchat.lol:7070/ws",
   domain: "alumchat.lol",
   resource: "",
+  mucService: "conference.alumchat.lol",
+  uploadService: "httpfileupload.alumchat.lol",
 };
 
 interface Message {
@@ -28,6 +30,19 @@ interface Contact {
   show?: string;
   subscription?: string;
   pfp?: string;
+}
+
+interface Group {
+  jid: string;
+  name: string;
+  participants: string[];
+}
+
+interface GroupInvitation {
+  from: string;
+  room: string;
+  inviter: string;
+  reason?: string;
 }
 
 // Define the shape of your context
@@ -65,9 +80,19 @@ interface XmppContextProps {
     service: string;
     domain: string;
     resource: string;
+    mucService: string;
+    uploadService: string;
   };
   addConversation: (jid: string) => void;
   requestUploadSlot: (file: File, to: string) => void;
+  groups: Group[];
+  createGroup: (groupName: string) => void;
+  joinGroup: (roomJid: string) => void;
+  inviteToGroup: (groupJid: string, userJid: string) => void;
+  sendGroupMessage: (groupJid: string, body: string) => void;
+  groupInvitations: GroupInvitation[];
+  acceptGroupInvitation: (invitation: GroupInvitation) => void;
+  declineGroupInvitation: (invitation: GroupInvitation) => void;
 }
 
 // Create the context
@@ -105,6 +130,14 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     setSelectedContact,
     addConversation,
     requestUploadSlot,
+    groups,
+    createGroup,
+    joinGroup,
+    inviteToGroup,
+    sendGroupMessage,
+    groupInvitations,
+    acceptGroupInvitation,
+    declineGroupInvitation,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -138,6 +171,14 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         globalXmppOptions,
         addConversation,
         requestUploadSlot,
+        groups,
+        createGroup,
+        joinGroup,
+        inviteToGroup,
+        sendGroupMessage,
+        groupInvitations,
+        acceptGroupInvitation,
+        declineGroupInvitation,
       }}
     >
       {children}
