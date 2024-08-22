@@ -40,10 +40,14 @@ interface XMPPFile {
   to: string;
 }
 
+// Modify the Group interface to include more details
 interface Group {
   jid: string;
   name: string;
   participants: string[];
+  isPublic?: boolean;
+  requiresInvite?: boolean;
+  isJoined?: boolean;
 }
 
 interface GroupInvitation {
@@ -136,9 +140,11 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   }, []);
 
   const handleJoinedGroups = (stanza: any) => {
+    console.log("Joined groups stanza:", stanza.toString());
     const items = stanza
       .getChild("query", "http://jabber.org/protocol/disco#items")
       .getChildren("item");
+    console.log("Items:", items);
 
     setGroups((prevGroups) => {
       // eslint-disable-next-line prefer-const
@@ -150,7 +156,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         if (!groupExists) {
           updatedGroups.push({
             jid,
-            name: jid.split("@")[0],
+            name: item.attrs.name || jid.split("@")[0],
             participants: [],
           });
         }
@@ -159,8 +165,82 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       return updatedGroups;
     });
 
+    // If not created, create a message array for the group
+    setMessages((prevMessages) => {
+      const updatedMessages = { ...prevMessages };
+      items.forEach((item: any) => {
+        const jid = item.attrs.jid;
+        if (!updatedMessages[jid]) {
+          updatedMessages[jid] = [];
+        }
+      });
+      return updatedMessages;
+    });
+
+    items.forEach((item: any) => {
+      const jid = item.attrs.jid;
+      getRoomInfo(jid);
+    });
+
     setGettingGroups(false);
   };
+
+  const handleRoomInfo = useCallback((stanza: any) => {
+    const from = stanza.attrs.from;
+    const query = stanza.getChild(
+      "query",
+      "http://jabber.org/protocol/disco#info"
+    );
+    const identity = query.getChild("identity");
+    const features = query.getChildren("feature");
+
+    const isPublic = features.some(
+      (feature: any) => feature.attrs.var === "muc_public"
+    );
+    const requiresInvite = features.some(
+      (feature: any) => feature.attrs.var === "muc_membersonly"
+    );
+    const isJoined = features.some(
+      (feature: any) => feature.attrs.var === "muc_joined"
+    );
+
+    console.log("Room info:", {
+      from,
+      identity,
+      features,
+      isPublic,
+      requiresInvite,
+      isJoined,
+    });
+
+    setGroups((prevGroups) => {
+      const updatedGroups = prevGroups.map((group) => {
+        if (group.jid === from) {
+          return {
+            ...group,
+            isPublic,
+            requiresInvite,
+            isJoined,
+            name: identity ? identity.attrs.name : group.name,
+          };
+        }
+        return group;
+      });
+
+      if (!prevGroups.some((group) => group.jid === from)) {
+        updatedGroups.push({
+          jid: from,
+          name: identity ? identity.attrs.name : from.split("@")[0],
+          participants: [],
+          isPublic,
+          requiresInvite,
+          isJoined,
+        });
+      }
+
+      return updatedGroups;
+    });
+  }, []);
 
   useEffect(() => {
     filesToBeUploadedRef.current = filesToBeUploaded;
@@ -204,6 +284,10 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         handleJoinedGroups(stanza);
       } else if (filesToBeUploadedRef.current.some((file) => file.id === id)) {
         handleUploadFile(stanza);
+      } else if (
+        stanza.getChild("query", "http://jabber.org/protocol/disco#info")
+      ) {
+        handleRoomInfo(stanza);
       } else {
         console.log("Unhandled stanza iq:", stanza.toString());
       }
@@ -548,6 +632,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   );
 
   const handleMessage = useCallback((stanza: any) => {
+    console.log("Message stanza:", stanza.toString());
     const from = stanza.getAttr("from").split("/")[0];
     const to = stanza.getAttr("to").split("/")[0];
     let id = stanza.getAttr("id");
@@ -864,12 +949,12 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
-  const sendGroupMessage = useCallback((groupJid: string, body: string) => {
+  const sendGroupMessage = useCallback((to: string, body: string) => {
     if (xmppRef.current) {
       const id = uuidv4();
       const messageStanza = xml(
         "message",
-        { to: groupJid, type: "groupchat", id },
+        { to, type: "groupchat", id },
         xml("body", {}, body)
       );
       xmppRef.current.send(messageStanza);
@@ -877,11 +962,11 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       // Save the message to the local state immediately
       setMessages((prevMessages) => ({
         ...prevMessages,
-        [groupJid]: [
-          ...(prevMessages[groupJid] || []),
+        [to]: [
+          ...(prevMessages[to] || []),
           {
             from: usernameRef.current,
-            to: groupJid,
+            to,
             body,
             timestamp: new Date(),
             id,
@@ -897,7 +982,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         if (toggleGettingGroups) {
           setGettingGroups(true);
         }
-        console.log("Getting joined groups");
+        console.log("Getting all rooms");
         const iqStanza = xml(
           "iq",
           { type: "get", to: xmppOptions.mucService },
@@ -908,6 +993,17 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     },
     [xmppOptions.mucService]
   );
+
+  const getRoomInfo = useCallback((roomJid: string) => {
+    if (xmppRef.current) {
+      const iqStanza = xml(
+        "iq",
+        { type: "get", to: roomJid },
+        xml("query", { xmlns: "http://jabber.org/protocol/disco#info" })
+      );
+      xmppRef.current.send(iqStanza);
+    }
+  }, []);
 
   const handleGroupInvitation = useCallback((stanza: any) => {
     const from = stanza.getAttr("from");

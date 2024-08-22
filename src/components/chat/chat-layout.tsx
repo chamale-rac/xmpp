@@ -21,7 +21,7 @@ export function ChatLayout({
   defaultCollapsed = false,
   navCollapsedSize,
 }: ChatLayoutProps) {
-  const { selectedContact } = useXmpp();
+  const { selectedContact, selectedGroup, selectedType } = useXmpp();
 
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
   const [isMobile, setIsMobile] = useState(false);
@@ -80,7 +80,7 @@ export function ChatLayout({
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-        {selectedContact ? (
+        {selectedType && (selectedContact || selectedGroup) ? (
           <Chat isMobile={isMobile} />
         ) : (
           <div className="flex flex-col gap-1 items-center text-center text-sm h-full justify-center">

@@ -11,24 +11,32 @@ interface Message {
 }
 
 export function Chat({ isMobile }: { isMobile: boolean }) {
-  const { messages, sendMessage, selectedContact } = useXmpp();
+  const {
+    messages,
+    sendMessage,
+    selectedContact,
+    selectedGroup,
+    selectedType,
+    sendGroupMessage,
+  } = useXmpp();
 
   // State for managing messages to display in the chat
   const [messagesState, setMessages] = React.useState<Message[]>([]);
 
   // Effect to update messagesState whenever messages or selectedContact changes
   useEffect(() => {
-    if (selectedContact && messages[selectedContact.jid]) {
+    if (selectedType === "group" && selectedGroup) {
+      setMessages(messages[selectedGroup.jid] || []);
+    } else if (selectedType === "contact" && selectedContact) {
       setMessages(messages[selectedContact.jid] || []);
     }
-  }, [messages, selectedContact]);
+  }, [messages, selectedContact, selectedGroup, selectedType]);
 
   const handleSendMessage = (newMessage: Message) => {
-    if (selectedContact) {
-      // Send the message via the XMPP hook
+    if (selectedType === "group" && selectedGroup) {
+      sendGroupMessage(selectedGroup.jid, newMessage.body);
+    } else if (selectedType === "contact" && selectedContact) {
       sendMessage(selectedContact.jid, newMessage.body);
-      // Optionally add it to local state immediately if desired
-      // setMessages([...messagesState, newMessage]);
     }
   };
 

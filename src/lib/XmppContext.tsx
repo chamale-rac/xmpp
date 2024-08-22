@@ -36,6 +36,9 @@ interface Group {
   jid: string;
   name: string;
   participants: string[];
+  isPublic?: boolean;
+  requiresInvite?: boolean;
+  isJoined?: boolean;
 }
 
 interface GroupInvitation {
