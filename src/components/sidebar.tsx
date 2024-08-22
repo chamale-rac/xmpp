@@ -1,4 +1,10 @@
-import { Bell, CirclePlus, UsersRound } from "lucide-react";
+import {
+  Bell,
+  CirclePlus,
+  ContactRound,
+  Group,
+  UsersRound,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -124,9 +130,24 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
         <Accordion type="multiple" className="w-full" defaultValue={["item-1"]}>
           <AccordionItem value="item-1">
             {/** CONTACTS */}
-            <AccordionTrigger>
-              {!isCollapsed && (
-                <h1 className=" text-lg text-gray-700">Contacts</h1>
+            <AccordionTrigger hideChevron={isCollapsed}>
+              {!isCollapsed ? (
+                <h1 className=" text-lg text-gray-700">
+                  Contacts {!gettingContacts && `(${contacts.length})`}
+                </h1>
+              ) : (
+                <div
+                  className={cn(
+                    buttonVariants({
+                      variant: "outline",
+                      size: "icon",
+                    }),
+                    "h-11 w-11 md:h-16 md:w-16",
+                    "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                  )}
+                >
+                  <ContactRound size={20} />
+                </div>
               )}
             </AccordionTrigger>
             <AccordionContent>
@@ -241,9 +262,24 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
           </AccordionItem>
           <AccordionItem value="item-2">
             {/** GROUPS */}
-            <AccordionTrigger>
-              {!isCollapsed && (
-                <h1 className=" text-lg text-gray-700">Groups</h1>
+            <AccordionTrigger hideChevron={isCollapsed}>
+              {!isCollapsed ? (
+                <h1 className=" text-lg text-gray-700">
+                  Groups {!gettingGroups && `(${groups.length})`}
+                </h1>
+              ) : (
+                <div
+                  className={cn(
+                    buttonVariants({
+                      variant: "outline",
+                      size: "icon",
+                    }),
+                    "h-11 w-11 md:h-16 md:w-16",
+                    "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                  )}
+                >
+                  <Group size={20} />
+                </div>
               )}
             </AccordionTrigger>
             <AccordionContent>
