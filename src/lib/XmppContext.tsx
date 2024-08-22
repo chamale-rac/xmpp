@@ -93,6 +93,11 @@ interface XmppContextProps {
   groupInvitations: GroupInvitation[];
   acceptGroupInvitation: (invitation: GroupInvitation) => void;
   declineGroupInvitation: (invitation: GroupInvitation) => void;
+  gettingGroups: boolean;
+  setSelectedGroup: (group: Group) => void;
+  selectedGroup: Group | undefined;
+  selectedType: "contact" | "group" | undefined;
+  setSelectedType: (type: "contact" | "group") => void;
 }
 
 // Create the context
@@ -138,6 +143,11 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     groupInvitations,
     acceptGroupInvitation,
     declineGroupInvitation,
+    gettingGroups,
+    setSelectedGroup,
+    selectedGroup,
+    selectedType,
+    setSelectedType,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -179,6 +189,11 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         groupInvitations,
         acceptGroupInvitation,
         declineGroupInvitation,
+        gettingGroups,
+        setSelectedGroup,
+        selectedGroup,
+        selectedType,
+        setSelectedType,
       }}
     >
       {children}

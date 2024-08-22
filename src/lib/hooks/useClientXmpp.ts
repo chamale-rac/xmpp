@@ -55,6 +55,10 @@ interface GroupInvitation {
 
 export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>();
+  const [selectedGroup, setSelectedGroup] = useState<Group | undefined>();
+  const [selectedType, setSelectedType] = useState<
+    "contact" | "group" | undefined
+  >();
   const [isConnected, setIsConnected] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [messages, setMessages] = useState<{ [jid: string]: Message[] }>({});
@@ -62,6 +66,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     [jid: string]: boolean;
   }>({});
   const [gettingContacts, setGettingContacts] = useState(true);
+  const [gettingGroups, setGettingGroups] = useState(true);
   const [subscriptionRequests, setSubscriptionRequests] = useState<
     Notification[]
   >([]);
@@ -130,18 +135,32 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     });
   }, []);
 
-  const handleJoinedGroups = useCallback((stanza: any) => {
+  const handleJoinedGroups = (stanza: any) => {
     const items = stanza
       .getChild("query", "http://jabber.org/protocol/disco#items")
       .getChildren("item");
-    const joinedGroups = items.map((item: any) => ({
-      jid: item.attrs.jid,
-      name: item.attrs.name || item.attrs.jid.split("@")[0],
-      participants: [],
-    }));
 
-    setGroups(joinedGroups);
-  }, []);
+    setGroups((prevGroups) => {
+      // eslint-disable-next-line prefer-const
+      let updatedGroups = [...prevGroups];
+
+      items.forEach((item: any) => {
+        const jid = item.attrs.jid;
+        const groupExists = prevGroups.some((group) => group.jid === jid);
+        if (!groupExists) {
+          updatedGroups.push({
+            jid,
+            name: jid.split("@")[0],
+            participants: [],
+          });
+        }
+      });
+
+      return updatedGroups;
+    });
+
+    setGettingGroups(false);
+  };
 
   useEffect(() => {
     filesToBeUploadedRef.current = filesToBeUploaded;
@@ -180,7 +199,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       if (stanza.getChild("query", "jabber:iq:roster")) {
         handleRoster(stanza);
       } else if (
-        stanza.is("iq") &&
         stanza.getChild("query", "http://jabber.org/protocol/disco#items")
       ) {
         handleJoinedGroups(stanza);
@@ -308,7 +326,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         console.log("XMPP client is online");
         setStatusMessage("༼ つ ◕_◕ ༽つ");
         requestRoster(true);
-        getJoinedGroups();
+        getJoinedGroups(true);
       });
 
       xmppClient.on("offline", () => {
@@ -873,17 +891,23 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
-  const getJoinedGroups = useCallback(() => {
-    if (xmppRef.current) {
-      console.log("Getting joined groups");
-      const iqStanza = xml(
-        "iq",
-        { type: "get", to: xmppOptions.mucService },
-        xml("query", { xmlns: "http://jabber.org/protocol/disco#items" })
-      );
-      xmppRef.current.send(iqStanza);
-    }
-  }, [xmppOptions.mucService]);
+  const getJoinedGroups = useCallback(
+    (toggleGettingGroups: boolean = false) => {
+      if (xmppRef.current) {
+        if (toggleGettingGroups) {
+          setGettingGroups(true);
+        }
+        console.log("Getting joined groups");
+        const iqStanza = xml(
+          "iq",
+          { type: "get", to: xmppOptions.mucService },
+          xml("query", { xmlns: "http://jabber.org/protocol/disco#items" })
+        );
+        xmppRef.current.send(iqStanza);
+      }
+    },
+    [xmppOptions.mucService]
+  );
 
   const handleGroupInvitation = useCallback((stanza: any) => {
     const from = stanza.getAttr("from");
@@ -978,5 +1002,10 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     groupInvitations,
     acceptGroupInvitation,
     declineGroupInvitation,
+    gettingGroups,
+    setSelectedGroup,
+    selectedGroup,
+    selectedType,
+    setSelectedType,
   };
 };
