@@ -34,6 +34,7 @@ export function Chat({ isMobile }: { isMobile: boolean }) {
 
   const handleSendMessage = (newMessage: Message) => {
     if (selectedType === "group" && selectedGroup) {
+      console.log("Sending group message", selectedGroup.jid, newMessage.body);
       sendGroupMessage(selectedGroup.jid, newMessage.body);
     } else if (selectedType === "contact" && selectedContact) {
       sendMessage(selectedContact.jid, newMessage.body);

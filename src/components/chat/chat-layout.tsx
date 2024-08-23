@@ -7,8 +7,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Sidebar } from "../sidebar";
 import { Chat } from "./chat";
-import { Cat } from "lucide-react";
+import { Cat, CircleSlash } from "lucide-react";
 import { useXmpp } from "@/lib/hooks/useXmpp";
+import { Button } from "../ui/button";
 
 interface ChatLayoutProps {
   defaultLayout: number[] | undefined;
@@ -21,7 +22,7 @@ export function ChatLayout({
   defaultCollapsed = false,
   navCollapsedSize,
 }: ChatLayoutProps) {
-  const { selectedContact, selectedGroup, selectedType } = useXmpp();
+  const { selectedContact, selectedGroup, selectedType, joinGroup } = useXmpp();
 
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
   const [isMobile, setIsMobile] = useState(false);
@@ -81,7 +82,40 @@ export function ChatLayout({
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
         {selectedType && (selectedContact || selectedGroup) ? (
-          <Chat isMobile={isMobile} />
+          selectedType == "contact" ? (
+            <Chat isMobile={isMobile} />
+          ) : selectedGroup?.isJoined ? (
+            <Chat isMobile={isMobile} />
+          ) : (
+            <div className="flex flex-col gap-1 items-center text-center text-sm h-full justify-center">
+              <CircleSlash className="w-12 h-12 text-zinc-500/40" />
+              <div className="text-zinc-800 text-lg">
+                You are not a member of{" "}
+                <span className="text-black font-semibold">
+                  {selectedGroup?.name}
+                </span>{" "}
+                group <br />
+                <span className="text-zinc-600 text-sm">
+                  This group is {selectedGroup?.isPublic ? "public" : "private"}
+                  , so requires {selectedGroup?.requiresInvite ? "an" : "no"}{" "}
+                  invitation to join.
+                </span>
+              </div>
+              {
+                // Display button to request an invite
+                selectedGroup?.isPublic && !selectedGroup.requiresInvite && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => joinGroup(selectedGroup.jid)}
+                    className="mt-2"
+                  >
+                    Join Group
+                  </Button>
+                )
+              }
+            </div>
+          )
         ) : (
           <div className="flex flex-col gap-1 items-center text-center text-sm h-full justify-center">
             <Cat className="w-12 h-12 text-zinc-500/40" />

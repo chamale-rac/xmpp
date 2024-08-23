@@ -89,54 +89,98 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [groups, setGroups] = useState<Group[]>([]);
 
   const handleGroupMessage = useCallback((stanza: any) => {
+    console.log("Group message stanza:", stanza.toString());
     const from = stanza.getAttr("from");
     const [groupJid, sender] = from.split("/");
     const body = stanza.getChildText("body");
     const id = stanza.getAttr("id") || uuidv4();
 
     if (body) {
-      setMessages((prevMessages) => ({
-        ...prevMessages,
-        [groupJid]: [
-          ...(prevMessages[groupJid] || []),
-          {
-            from: sender,
-            to: groupJid,
-            body,
-            timestamp: new Date(),
-            id,
-          },
-        ],
-      }));
+      setMessages((prevMessages) => {
+        const newMessage = {
+          id,
+          from: sender,
+          to: groupJid,
+          body,
+          timestamp: new Date(),
+        };
+        const existingMessages = prevMessages[groupJid] || [];
+
+        // Check if the message already exists
+        const messageExists = existingMessages.some((m) => m.id === id);
+
+        if (messageExists) {
+          return prevMessages;
+        }
+
+        return {
+          ...prevMessages,
+          [groupJid]: [...existingMessages, newMessage],
+        };
+      });
     }
   }, []);
 
   const handleGroupPresence = useCallback((stanza: any) => {
     const from = stanza.getAttr("from");
-    const [groupJid, participant] = from.split("/");
     const type = stanza.getAttr("type");
 
-    setGroups((prevGroups) => {
-      const groupIndex = prevGroups.findIndex(
-        (group) => group.jid === groupJid
+    const [roomJid, nickname] = from.split("/");
+
+    if (!type) {
+      // No type means it's a successful join
+      console.log(`Successfully joined room: ${roomJid}`);
+
+      // Update room participants
+      setGroups((prevGroups) =>
+        prevGroups.map((group) =>
+          group.jid === roomJid
+            ? {
+                ...group,
+                participants: [...new Set([...group.participants, nickname])],
+              }
+            : group
+        )
       );
-      if (groupIndex === -1) return prevGroups;
 
-      const updatedGroup = { ...prevGroups[groupIndex] };
-      if (type === "unavailable") {
-        updatedGroup.participants = updatedGroup.participants.filter(
-          (p) => p !== participant
-        );
-      } else if (!updatedGroup.participants.includes(participant)) {
-        updatedGroup.participants.push(participant);
-      }
+      // updateSelected group if it's the same room
+      setSelectedGroup((prevGroup) => {
+        if (prevGroup !== undefined && prevGroup.jid === roomJid) {
+          return {
+            ...prevGroup,
+            participants: [...new Set([...prevGroup.participants, nickname])],
+          };
+        }
+        return prevGroup;
+      });
 
-      return [
-        ...prevGroups.slice(0, groupIndex),
-        updatedGroup,
-        ...prevGroups.slice(groupIndex + 1),
-      ];
-    });
+      // You might want to fetch room history here if not already handled
+    } else if (type === "unavailable") {
+      console.log(`User left room: ${roomJid}`);
+
+      // Remove participant from the room
+      setGroups((prevGroups) =>
+        prevGroups.map((group) =>
+          group.jid === roomJid
+            ? {
+                ...group,
+                participants: group.participants.filter((p) => p !== nickname),
+              }
+            : group
+        )
+      );
+
+      // updateSelected group if it's the same room
+      setSelectedGroup((prevGroup) => {
+        if (prevGroup !== undefined && prevGroup.jid === roomJid) {
+          return {
+            ...prevGroup,
+            participants: prevGroup.participants.filter((p) => p !== nickname),
+          };
+        }
+        return prevGroup;
+      });
+    }
   }, []);
 
   const handleJoinedGroups = (stanza: any) => {
@@ -328,7 +372,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   }, []);
 
   const handleMAMResult = useCallback((stanza: any) => {
-    // console.log("MAM stanza:", stanza.toString());
+    console.log("MAM stanza:", stanza.toString());
 
     const result = stanza.getChild("result", "urn:xmpp:mam:2");
     const forwarded = result.getChild("forwarded", "urn:xmpp:forward:0");
@@ -754,15 +798,50 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     [contacts]
   );
 
-  const joinGroupChat = useCallback((roomJid: string, nickname: string) => {
+  const joinGroup = useCallback((roomJid: string) => {
     if (xmppRef.current) {
-      xmppRef.current.send(
+      console.log(`Joining group: ${roomJid}`);
+
+      // Generate use actual username
+      const nickname = usernameRef.current.split("@")[0];
+
+      // Send presence stanza to join the room
+      const presenceStanza = xml(
+        "presence",
+        { to: `${roomJid}/${nickname}` },
         xml(
-          "presence",
-          { to: `${roomJid}/${nickname}` },
-          xml("x", { xmlns: "http://jabber.org/protocol/muc" })
+          "x",
+          { xmlns: "http://jabber.org/protocol/muc" },
+          xml("history", { maxstanzas: "20" }) // Request last 20 messages
         )
       );
+
+      xmppRef.current.send(presenceStanza);
+
+      // Update local state
+      setGroups((prevGroups) =>
+        prevGroups.map((group) =>
+          group.jid === roomJid
+            ? {
+                ...group,
+                isJoined: true,
+                participants: [...group.participants, usernameRef.current],
+              }
+            : group
+        )
+      );
+
+      // Update the selected group if it's the same room
+      setSelectedGroup((prevGroup) => {
+        if (prevGroup && prevGroup.jid === roomJid) {
+          return {
+            ...prevGroup,
+            isJoined: true,
+            participants: [...prevGroup.participants, usernameRef.current],
+          };
+        }
+        return prevGroup;
+      });
     }
   }, []);
 
@@ -908,32 +987,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     [xmppOptions.mucService]
   );
 
-  const joinGroup = useCallback((roomJid: string) => {
-    if (xmppRef.current) {
-      const presenceStanza = xml(
-        "presence",
-        { to: `${roomJid}/${usernameRef.current}` },
-        xml("x", { xmlns: "http://jabber.org/protocol/muc" })
-      );
-      xmppRef.current.send(presenceStanza);
-
-      // Add the joined group to the state
-      setGroups((prevGroups) => {
-        if (!prevGroups.some((group) => group.jid === roomJid)) {
-          return [
-            ...prevGroups,
-            {
-              jid: roomJid,
-              name: roomJid.split("@")[0],
-              participants: [usernameRef.current],
-            },
-          ];
-        }
-        return prevGroups;
-      });
-    }
-  }, []);
-
   const inviteToGroup = useCallback((groupJid: string, userJid: string) => {
     if (xmppRef.current) {
       const inviteStanza = xml(
@@ -959,20 +1012,20 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       );
       xmppRef.current.send(messageStanza);
 
-      // Save the message to the local state immediately
-      setMessages((prevMessages) => ({
-        ...prevMessages,
-        [to]: [
-          ...(prevMessages[to] || []),
-          {
-            from: usernameRef.current,
-            to,
-            body,
-            timestamp: new Date(),
-            id,
-          },
-        ],
-      }));
+      // // Save the message to the local state immediately
+      // setMessages((prevMessages) => ({
+      //   ...prevMessages,
+      //   [to]: [
+      //     ...(prevMessages[to] || []),
+      //     {
+      //       from: usernameRef.current,
+      //       to,
+      //       body,
+      //       timestamp: new Date(),
+      //       id,
+      //     },
+      //   ],
+      // }));
     }
   }, []);
 
@@ -1073,7 +1126,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     addContact,
     getContactDetails,
     sendMessage,
-    joinGroupChat,
     setPresence,
     messages,
     triggerConnection,

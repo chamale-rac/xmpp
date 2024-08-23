@@ -61,7 +61,6 @@ interface XmppContextProps {
   ) => void;
   getContactDetails: (jid: string) => any;
   sendMessage: (to: string, body: string) => void;
-  joinGroupChat: (roomJid: string, nickname: string) => void;
   setPresence: (status: "away" | "chat" | "dnd" | "xa") => void;
   setStatusMessage: (message: string) => void;
   triggerConnection: (username: string, password: string) => void;
@@ -92,7 +91,6 @@ interface XmppContextProps {
   createGroup: (groupName: string) => void;
   joinGroup: (roomJid: string) => void;
   inviteToGroup: (groupJid: string, userJid: string) => void;
-  sendGroupMessage: (groupJid: string, body: string) => void;
   groupInvitations: GroupInvitation[];
   acceptGroupInvitation: (invitation: GroupInvitation) => void;
   declineGroupInvitation: (invitation: GroupInvitation) => void;
@@ -101,6 +99,7 @@ interface XmppContextProps {
   selectedGroup: Group | undefined;
   selectedType: "contact" | "group" | undefined;
   setSelectedType: (type: "contact" | "group") => void;
+  sendGroupMessage: (to: string, body: string) => void;
 }
 
 // Create the context
@@ -121,7 +120,6 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     addContact,
     getContactDetails,
     sendMessage,
-    joinGroupChat,
     setPresence,
     messages,
     triggerConnection,
@@ -142,7 +140,6 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     createGroup,
     joinGroup,
     inviteToGroup,
-    sendGroupMessage,
     groupInvitations,
     acceptGroupInvitation,
     declineGroupInvitation,
@@ -151,6 +148,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     selectedGroup,
     selectedType,
     setSelectedType,
+    sendGroupMessage,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -163,7 +161,6 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         addContact,
         getContactDetails,
         sendMessage,
-        joinGroupChat,
         setPresence,
         messages,
         validUser,
@@ -188,7 +185,6 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         createGroup,
         joinGroup,
         inviteToGroup,
-        sendGroupMessage,
         groupInvitations,
         acceptGroupInvitation,
         declineGroupInvitation,
@@ -197,6 +193,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         selectedGroup,
         selectedType,
         setSelectedType,
+        sendGroupMessage,
       }}
     >
       {children}

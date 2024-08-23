@@ -38,7 +38,7 @@ const linkify = (text: string) => {
 };
 
 export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
-  const { username, globalXmppOptions } = useXmpp();
+  const { username } = useXmpp();
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -77,13 +77,13 @@ export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
               }}
               className={cn(
                 "flex flex-col gap-2 p-4 whitespace-pre-wrap",
-                message.from === username + "@" + globalXmppOptions.domain
+                message.from.split("@")[0] === username
                   ? "items-end"
                   : "items-start"
               )}
             >
               <div className="flex gap-3 items-center">
-                {message.from !== username + "@" + globalXmppOptions.domain && (
+                {message.from.split("@")[0] !== username && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarFallback>
                       {
@@ -93,11 +93,12 @@ export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
                     </AvatarFallback>
                   </Avatar>
                 )}
+                <div>{message.from}</div>
                 <div
                   className="bg-accent p-3 rounded-md break-words max-w-48 md:max-w-xs"
                   dangerouslySetInnerHTML={{ __html: linkify(message.body) }}
                 />
-                {message.from === username + "@" + globalXmppOptions.domain && (
+                {message.from.split("@")[0] === username && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarFallback>
                       {

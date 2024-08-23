@@ -367,9 +367,9 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                         </Avatar>
                         <div className="flex flex-col max-w-28">
                           <span>{contact.name}</span>
-                          {/* <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                            {contact.jid}
-                          </div> */}
+                          <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
+                            {contact.isPublic ? "public" : "private"}
+                          </div>
                         </div>
                       </a>
                     )

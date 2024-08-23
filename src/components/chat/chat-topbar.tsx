@@ -150,7 +150,20 @@ export default function ChatTopbar() {
                       </span>
                       <span className="text-xs">
                         <span className="font-bold">participants:</span>{" "}
-                        {selectedGroup.participants}
+                        {selectedGroup.participants
+                          .slice(0, 3)
+                          .map((participant) => participant)
+                          .join(", ")}
+                      </span>
+                      <span className="text-xs">
+                        public: {selectedGroup.isPublic ? "yes" : "no"}
+                      </span>
+                      <span className="text-xs">
+                        requires invite:{" "}
+                        {selectedGroup.requiresInvite ? "yes" : "no"}
+                      </span>
+                      <span className="text-xs">
+                        joined: {selectedGroup.isJoined ? "yes" : "no"}
                       </span>
                     </div>
                   </div>
