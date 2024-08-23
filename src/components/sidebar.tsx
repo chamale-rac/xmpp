@@ -63,7 +63,8 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
               (
               {gettingContacts || gettingGroups
                 ? "?"
-                : contacts.length + groups.length}
+                : contacts.length +
+                  groups.filter((group) => group.isJoined).length}
               )
             </span>
           </div>
@@ -261,11 +262,13 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-2">
-            {/** GROUPS */}
+            {/** PUBLIC GROUPS */}
             <AccordionTrigger hideChevron={isCollapsed}>
               {!isCollapsed ? (
                 <h1 className=" text-lg text-gray-700">
-                  Groups {!gettingGroups && `(${groups.length})`}
+                  Joined Groups{" "}
+                  {!gettingGroups &&
+                    `(${groups.filter((group) => group.isJoined).length})`}
                 </h1>
               ) : (
                 <div
@@ -304,76 +307,198 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                       </div>
                     ))
                 : groups.length !== 0 &&
-                  groups.map((contact, index) =>
-                    isCollapsed ? (
-                      <TooltipProvider key={index}>
-                        <Tooltip key={index} delayDuration={0}>
-                          <TooltipTrigger asChild>
-                            <a
-                              className={cn(
-                                buttonVariants({
-                                  variant: "ghost",
-                                  size: "icon",
-                                }),
-                                "h-11 w-11 md:h-16 md:w-16",
-                                "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
-                              )}
-                              onClick={() => {
-                                setSelectedType("group");
-                                setSelectedGroup(contact);
-                              }}
+                  groups
+                    .filter((group) => group.isJoined)
+                    .map((contact, index) =>
+                      isCollapsed ? (
+                        <TooltipProvider key={index}>
+                          <Tooltip key={index} delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <a
+                                className={cn(
+                                  buttonVariants({
+                                    variant: "ghost",
+                                    size: "icon",
+                                  }),
+                                  "h-11 w-11 md:h-16 md:w-16",
+                                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                                )}
+                                onClick={() => {
+                                  setSelectedType("group");
+                                  setSelectedGroup(contact);
+                                }}
+                              >
+                                <Avatar className="flex justify-center items-center  rounded-3xl border">
+                                  <AvatarFallback>
+                                    {contact.name &&
+                                      contact.name
+                                        .split(" ")[0][0]
+                                        .toLocaleUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>{" "}
+                                <span className="sr-only">{contact.name}</span>
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="right"
+                              className="flex items-center gap-4"
                             >
-                              <Avatar className="flex justify-center items-center  rounded-3xl border">
-                                <AvatarFallback>
-                                  {contact.name &&
-                                    contact.name
-                                      .split(" ")[0][0]
-                                      .toLocaleUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>{" "}
-                              <span className="sr-only">{contact.name}</span>
-                            </a>
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="right"
-                            className="flex items-center gap-4"
-                          >
-                            {contact.name}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      <a
-                        key={index}
-                        className={cn(
-                          buttonVariants({ variant: "ghost", size: "xl" }),
-                          "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
-                          "justify-start gap-4 cursor-pointer  w-full"
-                        )}
-                        onClick={() => {
-                          setSelectedGroup(contact);
-                          setSelectedType("group");
-                        }}
-                      >
-                        <Avatar className="flex justify-center items-center rounded-3xl border">
-                          <AvatarFallback>
+                              {contact.name}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <a
+                          key={index}
+                          className={cn(
+                            buttonVariants({ variant: "ghost", size: "xl" }),
+                            "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
+                            "justify-start gap-4 cursor-pointer  w-full"
+                          )}
+                          onClick={() => {
+                            setSelectedGroup(contact);
+                            setSelectedType("group");
+                          }}
+                        >
+                          <Avatar className="flex justify-center items-center rounded-3xl border">
                             <AvatarFallback>
-                              {contact.name &&
-                                contact.name
-                                  .split(" ")[0][0]
-                                  .toLocaleUpperCase()}
+                              <AvatarFallback>
+                                {contact.name &&
+                                  contact.name
+                                    .split(" ")[0][0]
+                                    .toLocaleUpperCase()}
+                              </AvatarFallback>
                             </AvatarFallback>
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col max-w-28">
-                          <span>{contact.name}</span>
-                          <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                            {contact.isPublic ? "public" : "private"}
+                          </Avatar>
+                          <div className="flex flex-col max-w-28">
+                            <span>{contact.name}</span>
+                            <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
+                              {contact.isPublic ? "public" : "private"}
+                            </div>
+                          </div>
+                        </a>
+                      )
+                    )}
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-3">
+            {/** PUBLIC GROUPS */}
+            <AccordionTrigger hideChevron={isCollapsed}>
+              {!isCollapsed ? (
+                <h1 className=" text-lg text-gray-700">
+                  Public Groups{" "}
+                  {!gettingGroups &&
+                    `(${groups.filter((group) => group.isPublic).length})`}
+                </h1>
+              ) : (
+                <div
+                  className={cn(
+                    buttonVariants({
+                      variant: "outline",
+                      size: "icon",
+                    }),
+                    "h-11 w-11 md:h-16 md:w-16",
+                    "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                  )}
+                >
+                  <Group size={20} />
+                </div>
+              )}
+            </AccordionTrigger>
+            <AccordionContent>
+              {gettingGroups
+                ? isCollapsed
+                  ? Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="h-11 w-11 md:h-16 md:w-16">
+                        <div className="w-full h-full p-3 flex items-center justify-center">
+                          <Skeleton className="rounded-3xl h-9 w-9" />
+                        </div>
+                      </div>
+                    ))
+                  : Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="h-16 rounded-md px-5 mt-1">
+                        <div className="flex gap-4 items-center">
+                          <Skeleton className="h-11 w-11 rounded-3xl" />
+                          <div className="flex flex-col max-w-28 gap-1">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-3 w-16" />
                           </div>
                         </div>
-                      </a>
-                    )
-                  )}
+                      </div>
+                    ))
+                : groups.length !== 0 &&
+                  groups
+                    .filter((group) => group.isPublic)
+                    .map((contact, index) =>
+                      isCollapsed ? (
+                        <TooltipProvider key={index}>
+                          <Tooltip key={index} delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <a
+                                className={cn(
+                                  buttonVariants({
+                                    variant: "ghost",
+                                    size: "icon",
+                                  }),
+                                  "h-11 w-11 md:h-16 md:w-16",
+                                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                                )}
+                                onClick={() => {
+                                  setSelectedType("group");
+                                  setSelectedGroup(contact);
+                                }}
+                              >
+                                <Avatar className="flex justify-center items-center  rounded-3xl border">
+                                  <AvatarFallback>
+                                    {contact.name &&
+                                      contact.name
+                                        .split(" ")[0][0]
+                                        .toLocaleUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>{" "}
+                                <span className="sr-only">{contact.name}</span>
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="right"
+                              className="flex items-center gap-4"
+                            >
+                              {contact.name}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <a
+                          key={index}
+                          className={cn(
+                            buttonVariants({ variant: "ghost", size: "xl" }),
+                            "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
+                            "justify-start gap-4 cursor-pointer  w-full"
+                          )}
+                          onClick={() => {
+                            setSelectedGroup(contact);
+                            setSelectedType("group");
+                          }}
+                        >
+                          <Avatar className="flex justify-center items-center rounded-3xl border">
+                            <AvatarFallback>
+                              <AvatarFallback>
+                                {contact.name &&
+                                  contact.name
+                                    .split(" ")[0][0]
+                                    .toLocaleUpperCase()}
+                              </AvatarFallback>
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col max-w-28">
+                            <span>{contact.name}</span>
+                            <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
+                              {contact.isPublic ? "public" : "private"}
+                            </div>
+                          </div>
+                        </a>
+                      )
+                    )}
             </AccordionContent>
           </AccordionItem>
         </Accordion>

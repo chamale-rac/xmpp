@@ -489,10 +489,17 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     let id = message.getAttr("id");
     const body = message.getChildText("body");
     const from = message.getAttr("from").split("/")[0];
+    const fromDomain = from.split("@")[1];
     const to = message.getAttr("to").split("/")[0];
     const timestamp = new Date(
       forwarded.getChild("delay", "urn:xmpp:delay").getAttr("stamp")
     );
+
+    if (fromDomain === xmppOptions.mucService) {
+      // // Handle group messages
+      // handleGroupMessage(message);
+      return;
+    }
 
     if (body) {
       let contactJid;

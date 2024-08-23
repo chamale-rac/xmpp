@@ -38,7 +38,7 @@ const linkify = (text: string) => {
 };
 
 export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
-  const { username } = useXmpp();
+  const { username, selectedType } = useXmpp();
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -82,9 +82,14 @@ export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
                   : "items-start"
               )}
             >
-              <div className="flex gap-3 items-center">
+              <div className="flex gap-3 items-start">
                 {message.from.split("@")[0] !== username && (
-                  <Avatar className="flex justify-center items-center">
+                  <Avatar
+                    className={cn(
+                      "flex justify-center items-center",
+                      selectedType === "group" && "mt-4"
+                    )}
+                  >
                     <AvatarFallback>
                       {
                         // Get the first letter of the first word in the name
@@ -93,13 +98,32 @@ export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <div>{message.from}</div>
-                <div
-                  className="bg-accent p-3 rounded-md break-words max-w-48 md:max-w-xs"
-                  dangerouslySetInnerHTML={{ __html: linkify(message.body) }}
-                />
+                <div className="bg-accent p-3 rounded-md">
+                  {selectedType === "group" && (
+                    <div
+                      className={cn(
+                        "text-xs text-zinc-600 mb-2",
+                        message.from.split("@")[0] === username
+                          ? "text-right"
+                          : "text-left"
+                      )}
+                    >
+                      ~ {message.from}
+                    </div>
+                  )}
+                  <div
+                    lang="es"
+                    className="text-pretty break-all hyphens-auto max-w-48 md:max-w-xs"
+                    dangerouslySetInnerHTML={{ __html: linkify(message.body) }}
+                  />
+                </div>
                 {message.from.split("@")[0] === username && (
-                  <Avatar className="flex justify-center items-center">
+                  <Avatar
+                    className={cn(
+                      "flex justify-center items-center",
+                      selectedType === "group" && "mt-4"
+                    )}
+                  >
                     <AvatarFallback>
                       {
                         // Get the first letter of the first word in the name

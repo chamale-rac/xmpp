@@ -151,7 +151,6 @@ export default function ChatTopbar() {
                       <span className="text-xs">
                         <span className="font-bold">participants:</span>{" "}
                         {selectedGroup.participants
-                          .slice(0, 3)
                           .map((participant) => participant)
                           .join(", ")}
                       </span>
