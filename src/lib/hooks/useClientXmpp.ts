@@ -57,6 +57,12 @@ interface GroupInvitation {
   reason?: string;
 }
 
+interface Bookmark {
+  jid: string;
+  name: string;
+  autojoin: boolean;
+}
+
 export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>();
   const [selectedGroup, setSelectedGroup] = useState<Group | undefined>();
@@ -84,9 +90,115 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [groupInvitations, setGroupInvitations] = useState<GroupInvitation[]>(
     []
   );
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [autojoinAlreadyHandled, setAutojoinAlreadyHandled] = useState(false);
 
   // Add these to your existing useXmppClient hook
   const [groups, setGroups] = useState<Group[]>([]);
+
+  const getBookmarks = useCallback(() => {
+    if (xmppRef.current) {
+      const iqStanza = xml(
+        "iq",
+        { type: "get", id: "bookmarks1" },
+        xml(
+          "query",
+          { xmlns: "jabber:iq:private" },
+          xml("storage", { xmlns: "storage:bookmarks" })
+        )
+      );
+      xmppRef.current.send(iqStanza);
+    }
+  }, []);
+
+  const handleBookmarks = useCallback((stanza: any) => {
+    const storage = stanza.getChild("query").getChild("storage");
+    if (storage) {
+      console.log("Bookmarks stanza:", storage.toString());
+      const conferenceNodes = storage.getChildren("conference");
+      const newBookmarks: Bookmark[] = conferenceNodes.map((node: any) => ({
+        jid: node.attrs.jid,
+        name: node.attrs.name || node.attrs.jid.split("@")[0],
+        autojoin: node.attrs.autojoin === "true",
+      }));
+
+      setBookmarks(newBookmarks);
+    }
+  }, []);
+
+  const addBookmark = useCallback(
+    (roomJid: string, name: string, autojoin: boolean) => {
+      if (xmppRef.current) {
+        // avoid duplicated bookmarks based on the roomJid
+        const bookmarkExists = bookmarks.some(
+          (bookmark) => bookmark.jid === roomJid
+        );
+        if (bookmarkExists) {
+          return;
+        }
+
+        const newBookmarks = [...bookmarks, { jid: roomJid, name, autojoin }];
+
+        const iqStanza = xml(
+          "iq",
+          { type: "set", id: "bookmarks2" },
+          xml(
+            "query",
+            { xmlns: "jabber:iq:private" },
+            xml(
+              "storage",
+              { xmlns: "storage:bookmarks" },
+              ...newBookmarks.map((bookmark) =>
+                xml("conference", {
+                  jid: bookmark.jid,
+                  name: bookmark.name,
+                  autojoin: bookmark.autojoin.toString(),
+                })
+              )
+            )
+          )
+        );
+        xmppRef.current.send(iqStanza);
+
+        setBookmarks(newBookmarks);
+      }
+    },
+    [bookmarks]
+  );
+
+  const removeBookmark = useCallback(
+    (roomJid: string) => {
+      if (xmppRef.current) {
+        const newBookmarks = bookmarks.filter(
+          (bookmark) => bookmark.jid !== roomJid
+        );
+
+        const iqStanza = xml(
+          "iq",
+          { type: "set", id: "bookmarks3" },
+          xml(
+            "query",
+            { xmlns: "jabber:iq:private" },
+            xml(
+              "storage",
+              { xmlns: "storage:bookmarks" },
+              ...newBookmarks.map((bookmark) =>
+                xml("conference", {
+                  jid: bookmark.jid,
+                  name: bookmark.name,
+                  autojoin: bookmark.autojoin.toString(),
+                })
+              )
+            )
+          )
+        );
+        xmppRef.current.send(iqStanza);
+
+        setBookmarks(newBookmarks);
+      }
+    },
+    [bookmarks]
+  );
 
   const handleGroupMessage = useCallback((stanza: any) => {
     console.log("Group message stanza:", stanza.toString());
@@ -244,9 +356,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     const requiresInvite = features.some(
       (feature: any) => feature.attrs.var === "muc_membersonly"
     );
-    const isJoined = features.some(
-      (feature: any) => feature.attrs.var === "muc_joined"
-    );
 
     console.log("Room info:", {
       from,
@@ -254,7 +363,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       features,
       isPublic,
       requiresInvite,
-      isJoined,
     });
 
     setGroups((prevGroups) => {
@@ -264,7 +372,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
             ...group,
             isPublic,
             requiresInvite,
-            isJoined,
             name: identity ? identity.attrs.name : group.name,
           };
         }
@@ -278,7 +385,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
           participants: [],
           isPublic,
           requiresInvite,
-          isJoined,
         });
       }
 
@@ -332,7 +438,10 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         stanza.getChild("query", "http://jabber.org/protocol/disco#info")
       ) {
         handleRoomInfo(stanza);
-      } else {
+      } else if (id === "bookmarks1") {
+        handleBookmarks(stanza);
+      }
+      {
         console.log("Unhandled stanza iq:", stanza.toString());
       }
     } else {
@@ -455,6 +564,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         setStatusMessage("༼ つ ◕_◕ ༽つ");
         requestRoster(true);
         getJoinedGroups(true);
+        getBookmarks();
       });
 
       xmppClient.on("offline", () => {
@@ -1121,6 +1231,29 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
+  const autoJoinBookmarkedRooms = useCallback(() => {
+    bookmarks.forEach((bookmark) => {
+      if (bookmark.autojoin) {
+        joinGroup(bookmark.jid);
+      }
+    });
+  }, [bookmarks, joinGroup]);
+
+  useEffect(() => {
+    if (bookmarks.length > 0 && !gettingGroups) {
+      if (!autojoinAlreadyHandled) {
+        console.log("Autojoining bookmarked rooms");
+        setAutojoinAlreadyHandled(true);
+        autoJoinBookmarkedRooms();
+      }
+    }
+  }, [
+    bookmarks,
+    gettingGroups,
+    autoJoinBookmarkedRooms,
+    autojoinAlreadyHandled,
+  ]);
+
   return {
     isConnected,
     addContact,
@@ -1155,5 +1288,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     selectedGroup,
     selectedType,
     setSelectedType,
+    addBookmark,
+    removeBookmark,
   };
 };

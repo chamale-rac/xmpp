@@ -22,7 +22,13 @@ export function ChatLayout({
   defaultCollapsed = false,
   navCollapsedSize,
 }: ChatLayoutProps) {
-  const { selectedContact, selectedGroup, selectedType, joinGroup } = useXmpp();
+  const {
+    selectedContact,
+    selectedGroup,
+    selectedType,
+    joinGroup,
+    addBookmark,
+  } = useXmpp();
 
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
   const [isMobile, setIsMobile] = useState(false);
@@ -107,7 +113,10 @@ export function ChatLayout({
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={() => joinGroup(selectedGroup.jid)}
+                    onClick={() => {
+                      joinGroup(selectedGroup.jid);
+                      addBookmark(selectedGroup.jid, selectedGroup.name, true);
+                    }}
                     className="mt-2"
                   >
                     Join Group
