@@ -1471,6 +1471,48 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     autojoinAlreadyHandled,
   ]);
 
+  const closeSession = useCallback(() => {
+    if (xmppRef.current) {
+      // Disconnect from the XMPP server
+      xmppRef.current.stop().catch(console.error);
+
+      // Clear the XMPP client reference
+      xmppRef.current = null;
+
+      // Reset connection state
+      setIsConnected(false);
+
+      // Clear user-related states
+      setUsername("");
+      setStatus("chat");
+      setStatusMessageState("༼ つ ◕_◕ ༽つ");
+
+      // Clear contacts and messages
+      setContacts([]);
+      setMessages({});
+
+      // Clear groups and related states
+      setGroups([]);
+      setSelectedGroup(undefined);
+      setGroupInvitations([]);
+
+      // Reset other states
+      setSubscriptionRequests([]);
+      setHistoryFetched({});
+      setGettingContacts(true);
+      setGettingGroups(true);
+      setFilesToBeUploaded([]);
+      setBookmarks([]);
+      setAutojoinAlreadyHandled(false);
+
+      // Clear selected states
+      setSelectedContact(undefined);
+      setSelectedType(undefined);
+
+      console.log("XMPP session closed and states reset");
+    }
+  }, []);
+
   return {
     isConnected,
     addContact,
@@ -1507,5 +1549,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     setSelectedType,
     addBookmark,
     removeBookmark,
+    setIsConnected,
+    closeSession,
   };
 };

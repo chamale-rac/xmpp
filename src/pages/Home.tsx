@@ -15,7 +15,7 @@ import { Progress } from "@/components/ui/progress";
 export default function Home() {
   const { user, logout } = useUser();
   const navigate = useNavigate();
-  const { isConnected, triggerConnection } = useXmpp();
+  const { isConnected, triggerConnection, closeSession } = useXmpp();
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -54,6 +54,7 @@ export default function Home() {
   if (!user)
     return (
       <div className="flex h-[calc(100dvh)] flex-col items-center justify-center p-4 md:px-24 py-32 gap-4 bg-background">
+        <h1 className="text-6xl m-6 mb-10">༼ つ ◕_◕ ༽つ</h1>
         <Alert variant="destructive" className="w-fit mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>You are not logged in. </AlertTitle>
@@ -94,6 +95,7 @@ export default function Home() {
             onClick={() => {
               logout();
               navigate("/login");
+              closeSession();
             }}
           >
             <LogOut className="w-7 h-7 text-muted-foreground" />

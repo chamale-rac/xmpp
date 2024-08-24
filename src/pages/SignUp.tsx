@@ -22,7 +22,7 @@ interface signUpResolve {
 const SignUp = () => {
   const { login } = useUser();
   const navigate = useNavigate();
-  const { registerXmppUser } = useXmpp();
+  const { registerXmppUser, closeSession } = useXmpp();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -39,6 +39,7 @@ const SignUp = () => {
             login(username, password);
             resolve({ name: username });
             // wait 200 ml seconds before redirecting to home
+            closeSession();
             setTimeout(() => {
               navigate("/home", { replace: true });
             }, 200);

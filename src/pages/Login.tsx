@@ -20,7 +20,7 @@ interface loginResolve {
 }
 
 const Login = () => {
-  const { checkXmppUser } = useXmpp();
+  const { checkXmppUser, closeSession } = useXmpp();
   const { login } = useUser();
   const navigate = useNavigate();
 
@@ -38,6 +38,7 @@ const Login = () => {
           login(username, password);
           resolve({ name: username });
           // wait 200 ml seconds before redirecting to home
+          closeSession();
           setTimeout(() => {
             navigate("/home", { replace: true });
           }, 200);
@@ -64,7 +65,7 @@ const Login = () => {
     <MaxWidthWrapper className="flex h-dvh items-center justify-center">
       <Card className="mx-auto max-w-sm ">
         <CardHeader>
-          <CardTitle className="text-2xl ">Login</CardTitle>
+          <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
             Enter your username below to login to your account
           </CardDescription>

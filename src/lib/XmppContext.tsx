@@ -108,6 +108,8 @@ interface XmppContextProps {
   setSelectedType: (type: "contact" | "group") => void;
   sendGroupMessage: (to: string, body: string) => void;
   addBookmark: (roomJid: string, name: string, autojoin: boolean) => void;
+  setIsConnected: (connected: boolean) => void;
+  closeSession: () => void;
 }
 
 // Create the context
@@ -158,6 +160,8 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     setSelectedType,
     sendGroupMessage,
     addBookmark,
+    setIsConnected,
+    closeSession,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -204,6 +208,8 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         setSelectedType,
         sendGroupMessage,
         addBookmark,
+        setIsConnected,
+        closeSession,
       }}
     >
       {children}
