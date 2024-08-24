@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import InviteToGroup from "../InviteToGroup";
 
 export default function ChatTopbar() {
   const { selectedContact, selectedType, selectedGroup } = useXmpp();
@@ -123,6 +124,7 @@ export default function ChatTopbar() {
         </div>
 
         <div>
+          {selectedType === "group" && <InviteToGroup />}
           <Popover>
             <PopoverTrigger asChild>
               <a

@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 
 const FileUpload = () => {
-  const { requestUploadSlot, selectedContact } = useXmpp();
+  const { requestUploadSlot, selectedContact, selectedGroup, selectedType } =
+    useXmpp();
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone({});
 
   function shortPath(path: string | undefined) {
@@ -22,9 +23,17 @@ const FileUpload = () => {
   ));
 
   const handleUpload = () => {
-    acceptedFiles.forEach((file) => {
-      requestUploadSlot(file, selectedContact!.jid);
-    });
+    if (selectedType === "group" && selectedGroup) {
+      acceptedFiles.forEach((file) => {
+        requestUploadSlot(file, selectedGroup!.jid);
+      });
+    } else if (selectedType === "contact" && selectedContact) {
+      acceptedFiles.forEach((file) => {
+        requestUploadSlot(file, selectedContact!.jid);
+      });
+    }
+    // Clear the files after upload
+    acceptedFiles.splice(0, acceptedFiles.length);
   };
 
   return (

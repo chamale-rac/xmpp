@@ -13,7 +13,7 @@ interface testCredentials {
 }
 
 const testCredentials: testCredentials = {
-  username: "cha21881clean",
+  username: "cha21881dos",
   password: "admin",
 };
 

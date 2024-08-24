@@ -97,7 +97,7 @@ interface XmppContextProps {
     }
   ) => string | undefined;
   joinGroup: (roomJid: string) => void;
-  inviteToGroup: (groupJid: string, userJid: string) => void;
+  inviteToGroup: (groupJid: string, userJid: string, reason: string) => void;
   groupInvitations: GroupInvitation[];
   acceptGroupInvitation: (invitation: GroupInvitation) => void;
   declineGroupInvitation: (invitation: GroupInvitation) => void;

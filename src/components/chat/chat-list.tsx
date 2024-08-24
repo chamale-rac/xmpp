@@ -108,7 +108,7 @@ export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
                           : "text-left"
                       )}
                     >
-                      ~ {message.from}
+                      ~ {message.from.split("@")[0]}
                     </div>
                   )}
                   <div
@@ -116,6 +116,11 @@ export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
                     className="text-pretty break-all hyphens-auto max-w-48 md:max-w-xs"
                     dangerouslySetInnerHTML={{ __html: linkify(message.body) }}
                   />
+                  <div className="text-xs text-zinc-500/50 mt-2 text-right">
+                    {message.timestamp.getHours()}:
+                    {message.timestamp.getMinutes().toString().padStart(2, "0")}{" "}
+                    {message.timestamp.getHours() >= 12 ? "p.m." : "a.m."}
+                  </div>
                 </div>
                 {message.from.split("@")[0] === username && (
                   <Avatar

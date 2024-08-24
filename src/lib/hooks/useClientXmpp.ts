@@ -202,19 +202,25 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
   const handleGroupMessage = useCallback((stanza: any) => {
     console.log("Group message stanza:", stanza.toString());
+    console.log("Group message stanza:", stanza.toString());
     const from = stanza.getAttr("from");
     const [groupJid, sender] = from.split("/");
     const body = stanza.getChildText("body");
     const id = stanza.getAttr("id") || uuidv4();
 
     if (body) {
+      // get timestamp from the delay element
+      const timestamp = new Date(
+        stanza.getChild("delay", "urn:xmpp:delay").getAttr("stamp")
+      );
+
       setMessages((prevMessages) => {
         const newMessage = {
           id,
           from: sender,
           to: groupJid,
           body,
-          timestamp: new Date(),
+          timestamp,
         };
         const existingMessages = prevMessages[groupJid] || [];
 
@@ -244,6 +250,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       console.log(`Successfully joined room: ${roomJid}`);
 
       // Update room participants
+      console.log("Groups-LOG 1");
       setGroups((prevGroups) =>
         prevGroups.map((group) =>
           group.jid === roomJid
@@ -271,6 +278,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       console.log(`User left room: ${roomJid}`);
 
       // Remove participant from the room
+      console.log("Groups-LOG 2");
       setGroups((prevGroups) =>
         prevGroups.map((group) =>
           group.jid === roomJid
@@ -302,6 +310,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       .getChildren("item");
     console.log("Items:", items);
 
+    console.log("Groups-LOG 3");
     setGroups((prevGroups) => {
       // eslint-disable-next-line prefer-const
       let updatedGroups = [...prevGroups];
@@ -365,6 +374,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       requiresInvite,
     });
 
+    console.log("Groups-LOG 4");
     setGroups((prevGroups) => {
       const updatedGroups = prevGroups.map((group) => {
         if (group.jid === from) {
@@ -417,8 +427,12 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       } else if (type === "groupchat") {
         handleGroupMessage(stanza);
       } else {
-        const x = stanza.getChild("x", "http://jabber.org/protocol/muc#user");
-        if (x && x.getChild("invite")) {
+        const x = stanza.getChild("x");
+        if (
+          x &&
+          (x.attrs.xmlns === "http://jabber.org/protocol/muc#user" ||
+            x.attrs.xmlns === "jabber:x:conference")
+        ) {
           handleGroupInvitation(stanza);
         } else {
           handleMessage(stanza);
@@ -440,8 +454,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         handleRoomInfo(stanza);
       } else if (id === "bookmarks1") {
         handleBookmarks(stanza);
-      }
-      {
+      } else {
         console.log("Unhandled stanza iq:", stanza.toString());
       }
     } else {
@@ -767,8 +780,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const acceptSubscription = useCallback(
     (jid: string) => {
       if (xmppRef.current) {
-        xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" }));
-        xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" }));
+        xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" })); // Accept the subscription
+        xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" })); // Automatically subscribe back
         setSubscriptionRequests((prev) =>
           prev.filter((request) => request.from !== jid)
         );
@@ -790,7 +803,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
           prev.filter((request) => request.from !== jid)
         );
 
-        // requestRoster();
         requestRoster();
       }
     },
@@ -820,15 +832,16 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       }
 
       // Check if the user already exists in the contacts
-      const contactExists = contacts.some((contact) => contact.jid === from);
-      if (!contactExists) {
-        setContacts((prevContacts) => [
-          ...prevContacts,
-          { jid: from, name: from.split("@")[0] },
-        ]);
-
-        addConversation(from);
-      }
+      setContacts((prevContacts) => {
+        const contactExists = prevContacts.some(
+          (contact) => contact.jid === from
+        );
+        if (!contactExists) {
+          return [...prevContacts, { jid: from, name: from.split("@")[0] }];
+        } else {
+          return prevContacts;
+        }
+      });
 
       // console.log("Message:", { contactJid, from, to, body });
       setMessages((prevMessages) => {
@@ -913,52 +926,55 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     [shareOnlineStatus, requestRoster]
   );
 
-  const addConversation = useCallback(
-    (jid: string) => {
-      if (xmppRef.current) {
-        // // Send a presence probe to check the contact's status
-        // xmppRef.current.send(xml("presence", { to: jid, type: "probe" }));
+  const addConversation = (jid: string) => {
+    if (xmppRef.current) {
+      // // Send a presence probe to check the contact's status
+      // xmppRef.current.send(xml("presence", { to: jid, type: "probe" }));
+      // Check if the contact already exists in the contacts
+      const contactExists = contacts.some((contact) => contact.jid === jid);
 
-        // Add the contact to the roster without requesting subscription
-        const rosterIQ = xml(
-          "iq",
-          { type: "set", id: "roster_add_1" },
-          xml(
-            "query",
-            { xmlns: "jabber:iq:roster" },
-            xml("item", { jid: jid, subscription: "none" })
-          )
-        );
-        xmppRef.current.send(rosterIQ);
-
-        // Update local state to reflect the new conversation
-        setContacts((prevContacts) => {
-          const contactExists = prevContacts.some(
-            (contact) => contact.jid === jid
-          );
-          if (!contactExists) {
-            return [
-              ...prevContacts,
-              { jid, name: jid.split("@")[0], subscription: "none" },
-            ];
-          }
-          return prevContacts;
-        });
-
-        // Create an empty message array for the contact if it doesn't exist
-        setMessages((prevMessages) => {
-          if (!prevMessages[jid]) {
-            return { ...prevMessages, [jid]: [] };
-          }
-          return prevMessages;
-        });
-
-        // Optionally, you can still request the roster to ensure server-side synchronization
-        requestRoster();
+      if (contactExists) {
+        return;
       }
-    },
-    [requestRoster]
-  );
+
+      // Add the contact to the roster without requesting subscription
+      const rosterIQ = xml(
+        "iq",
+        { type: "set", id: "roster_add_1" },
+        xml(
+          "query",
+          { xmlns: "jabber:iq:roster" },
+          xml("item", { jid: jid, subscription: "none" })
+        )
+      );
+      xmppRef.current.send(rosterIQ);
+
+      // Update local state to reflect the new conversation
+      setContacts((prevContacts) => {
+        const contactExists = prevContacts.some(
+          (contact) => contact.jid === jid
+        );
+        if (!contactExists) {
+          return [
+            ...prevContacts,
+            { jid, name: jid.split("@")[0], subscription: "none" },
+          ];
+        }
+        return prevContacts;
+      });
+
+      // Create an empty message array for the contact if it doesn't exist
+      setMessages((prevMessages) => {
+        if (!prevMessages[jid]) {
+          return { ...prevMessages, [jid]: [] };
+        }
+        return prevMessages;
+      });
+
+      // Optionally, you can still request the roster to ensure server-side synchronization
+      requestRoster();
+    }
+  };
 
   const getContactDetails = useCallback(
     (jid: string) => contacts.find((contact) => contact.jid === jid),
@@ -986,6 +1002,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       xmppRef.current.send(presenceStanza);
 
       // Update local state
+      console.log("Groups-LOG 5");
       setGroups((prevGroups) =>
         prevGroups.map((group) =>
           group.jid === roomJid
@@ -1092,8 +1109,18 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         if (fileToUpload) {
           // Upload the file
           uploadFileToUrl(putUrl, fileToUpload.file).then(() => {
-            // Send the message with the file URL
-            sendMessage(fileToUpload.to, `File: ${getUrl}`);
+            // Check if the message is a group message
+            const isGroupMessage = fileToUpload.to.includes(
+              xmppOptions.mucService
+            );
+
+            if (isGroupMessage) {
+              // Send the message with the file URL
+              sendGroupMessage(fileToUpload.to, `File: ${getUrl}`);
+            } else {
+              // Send the message with the file URL
+              sendMessage(fileToUpload.to, `File: ${getUrl}`);
+            }
 
             // Remove the file from the filesToBeUploaded state
             setFilesToBeUploaded((prev) =>
@@ -1216,6 +1243,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         xmppRef.current.send(configureIQ);
 
         // Add the new group to the state
+        console.log("Groups-LOG 6");
         setGroups((prevGroups) => [
           ...prevGroups,
           {
@@ -1238,20 +1266,32 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     [xmppOptions.mucService, addBookmark]
   );
 
-  const inviteToGroup = useCallback((groupJid: string, userJid: string) => {
-    if (xmppRef.current) {
-      const inviteStanza = xml(
-        "message",
-        { to: groupJid },
-        xml(
-          "x",
-          { xmlns: "http://jabber.org/protocol/muc#user" },
-          xml("invite", { to: userJid })
-        )
-      );
-      xmppRef.current.send(inviteStanza);
-    }
-  }, []);
+  const inviteToGroup = useCallback(
+    (groupJid: string, userJid: string, reason?: string) => {
+      if (xmppRef.current) {
+        const inviteElement = xml("invite", { to: userJid });
+
+        if (reason) {
+          inviteElement.append(xml("reason", {}, reason));
+        }
+
+        const inviteStanza = xml(
+          "message",
+          { to: groupJid },
+          xml(
+            "x",
+            { xmlns: "http://jabber.org/protocol/muc#user" },
+            inviteElement
+          )
+        );
+
+        console.log("Inviting user to group:", inviteStanza.toString());
+
+        xmppRef.current.send(inviteStanza);
+      }
+    },
+    []
+  );
 
   const sendGroupMessage = useCallback((to: string, body: string) => {
     if (xmppRef.current) {
@@ -1310,20 +1350,46 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   }, []);
 
   const handleGroupInvitation = useCallback((stanza: any) => {
-    const from = stanza.getAttr("from");
-    const x = stanza.getChild("x", "http://jabber.org/protocol/muc#user");
-    const invite = x.getChild("invite");
-    const inviter = invite.getAttr("from");
-    const reason = invite.getChildText("reason");
+    console.log("Group invitation stanza:", stanza.toString());
+    let from, room, inviter, reason;
 
-    const newInvitation: GroupInvitation = {
-      from,
-      room: from,
-      inviter,
-      reason,
-    };
+    const x = stanza.getChild("x");
+    if (x && x.attrs.xmlns === "http://jabber.org/protocol/muc#user") {
+      // Handle the standard MUC invitation format
+      from = stanza.getAttr("from");
+      room = from;
+      const invite = x.getChild("invite");
+      inviter = invite.getAttr("from");
+      reason = invite.getChildText("reason");
+    } else if (x && x.attrs.xmlns === "jabber:x:conference") {
+      // Handle the alternative conference invitation format
+      from = stanza.getAttr("from");
+      room = x.getAttr("jid");
+      inviter = from;
+      reason = x.getAttr("reason") || "";
+    } else {
+      // If neither format matches, log an error and return
+      console.error("Unrecognized invitation format:", stanza.toString());
+      return;
+    }
 
-    setGroupInvitations((prev) => [...prev, newInvitation]);
+    setGroupInvitations((prev) => {
+      // Check if the invitation already exists
+      const invitationExists = prev.some((inv) => inv.room === room);
+      if (invitationExists) {
+        return prev;
+      } else {
+        return [
+          ...prev,
+          {
+            from,
+            room,
+            inviter,
+            reason,
+          },
+        ];
+      }
+    });
   }, []);
 
   const acceptGroupInvitation = useCallback((invitation: GroupInvitation) => {
@@ -1341,14 +1407,19 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       );
 
       // Add the joined group to the groups list
+
+      console.log("Groups-LOG 7");
       setGroups((prev) => [
         ...prev,
         {
           jid: invitation.room,
           name: invitation.room.split("@")[0],
           participants: [],
+          isJoined: true,
         },
       ]);
+
+      getRoomInfo(invitation.room);
     }
   }, []);
 
