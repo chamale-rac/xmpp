@@ -13,7 +13,18 @@ import { Toaster } from "sonner";
 import { XmppProvider } from "@/lib/XmppContext.tsx";
 import { UserProvider } from "@/lib/UserContext.tsx";
 
-// import AnimatedCursor from "react-animated-cursor";
+// Define global variables and functions
+declare global {
+  interface Window {
+    btoa: (input: string) => string;
+    WebSocket: typeof WebSocket;
+  }
+}
+
+// Ensure btoa is available globally
+if (typeof window !== "undefined" && !window.btoa) {
+  window.btoa = (input) => Buffer.from(input).toString("base64");
+}
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -46,6 +57,8 @@ createRoot(document.getElementById("root")!).render(
     </UserProvider>
   </ThemeProvider>
 );
+
+// The AnimatedCursor component remains commented out
 
 {
   /*     <AnimatedCursor
