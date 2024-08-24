@@ -1,5 +1,5 @@
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,15 +13,19 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useXmpp } from "@/lib/hooks/useXmpp";
+import { useUser } from "@/lib/UserContext";
 
 interface loginResolve {
   name: string;
 }
 
 const Login = () => {
+  const { checkXmppUser } = useXmpp();
+  const { login } = useUser();
+  const navigate = useNavigate();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { checkXmppUser } = useXmpp();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +35,12 @@ const Login = () => {
       try {
         const isAuthenticated = await checkXmppUser(username, password);
         if (isAuthenticated) {
+          login(username, password);
           resolve({ name: username });
+          // wait 200 ml seconds before redirecting to home
+          setTimeout(() => {
+            navigate("/home", { replace: true });
+          }, 200);
         } else {
           reject(new Error("Invalid credentials. Please try again."));
         }
@@ -48,7 +57,6 @@ const Login = () => {
       loading: "Logging in...",
       success: (data) => `Welcome, ${data.name}!`,
       error: (err) => `${err.message}`,
-      className: "grainy-animated-gradient border-none",
     });
   };
 

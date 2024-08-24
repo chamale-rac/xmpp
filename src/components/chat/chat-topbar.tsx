@@ -111,7 +111,7 @@ export default function ChatTopbar() {
                 {selectedType && selectedType}
               </span>
             </span>
-            <span className="text-xs">
+            <span className="text-xs text-zinc-400">
               {
                 // selectedGroup.participants array to text using , and max of 3
                 selectedGroup.participants
@@ -119,6 +119,7 @@ export default function ChatTopbar() {
                   .map((participant) => participant)
                   .join(", ")
               }
+              {selectedGroup.participants.length > 3 ? " and more..." : ""}
             </span>
           </div>
         </div>

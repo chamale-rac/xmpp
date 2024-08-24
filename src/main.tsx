@@ -11,6 +11,7 @@ import "./index.css";
 import { Toaster } from "sonner";
 
 import { XmppProvider } from "@/lib/XmppContext.tsx";
+import { UserProvider } from "@/lib/UserContext.tsx";
 
 // import AnimatedCursor from "react-animated-cursor";
 
@@ -37,15 +38,17 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-    <XmppProvider>
-      <RouterProvider router={router} />
-      <Toaster />
-    </XmppProvider>
+    <UserProvider>
+      <XmppProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+      </XmppProvider>
+    </UserProvider>
   </ThemeProvider>
 );
 
 {
-  /* <AnimatedCursor
+  /*     <AnimatedCursor
       innerSize={8}
       outerSize={20} // Original 35
       innerScale={1}
@@ -59,5 +62,5 @@ createRoot(document.getElementById("root")!).render(
         backgroundColor: "#f0f0f0",
         mixBlendMode: "exclusion",
       }}
-    /> */
+    />*/
 }

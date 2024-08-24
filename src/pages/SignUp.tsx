@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,15 +13,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useXmpp } from "@/lib/hooks/useXmpp";
+import { useUser } from "@/lib/UserContext";
 
 interface signUpResolve {
   name: string;
 }
 
 const SignUp = () => {
+  const { login } = useUser();
+  const navigate = useNavigate();
+  const { registerXmppUser } = useXmpp();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { registerXmppUser } = useXmpp();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +36,12 @@ const SignUp = () => {
         try {
           const isRegistered = await registerXmppUser(username, password);
           if (isRegistered) {
+            login(username, password);
             resolve({ name: username });
+            // wait 200 ml seconds before redirecting to home
+            setTimeout(() => {
+              navigate("/home", { replace: true });
+            }, 200);
           } else {
             reject(
               new Error(
