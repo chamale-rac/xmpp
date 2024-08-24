@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { TransitionPanel } from "@/components/core/transition-panel";
 import useMeasure from "react-use-measure";
 import { Switch } from "./ui/switch";

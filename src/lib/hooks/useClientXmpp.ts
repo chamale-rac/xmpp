@@ -647,6 +647,9 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     if (type === "unavailable") {
       status = "";
       show = "offline";
+    } else if (type === "error") {
+      status = "";
+      show = "unknown";
     }
 
     if (type === "subscribe") {
@@ -1080,15 +1083,90 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   }
 
   const createGroup = useCallback(
-    (groupName: string) => {
+    (
+      groupName: string,
+      options: {
+        description?: string;
+        isPublic?: boolean;
+        customAddress?: string;
+      } = {}
+    ) => {
       if (xmppRef.current) {
-        const roomJid = `${groupName}@${xmppOptions.mucService}`;
+        const {
+          description = "",
+          isPublic = true,
+          customAddress = "",
+        } = options;
+
+        // Sanitize and format the room address
+        let roomAddress = customAddress
+          ? customAddress.toLowerCase().replace(/[^a-z0-9-_]/g, "")
+          : groupName.toLowerCase().replace(/\s+/g, "-");
+
+        // Ensure the room address is not empty
+        if (!roomAddress) {
+          roomAddress = `group-${Date.now()}`;
+        }
+
+        const roomJid = `${roomAddress}@${xmppOptions.mucService}`;
+
+        // Create the room
         const presenceStanza = xml(
           "presence",
           { to: `${roomJid}/${usernameRef.current}` },
           xml("x", { xmlns: "http://jabber.org/protocol/muc" })
         );
         xmppRef.current.send(presenceStanza);
+
+        // Configure the room
+        const configureIQ = xml(
+          "iq",
+          { to: roomJid, type: "set", id: "config1" },
+          xml(
+            "query",
+            { xmlns: "http://jabber.org/protocol/muc#owner" },
+            xml(
+              "x",
+              { xmlns: "jabber:x:data", type: "submit" },
+              xml(
+                "field",
+                { var: "FORM_TYPE" },
+                xml("value", {}, "http://jabber.org/protocol/muc#roomconfig")
+              ),
+              xml(
+                "field",
+                { var: "muc#roomconfig_roomname" },
+                xml("value", {}, groupName)
+              ),
+              xml(
+                "field",
+                { var: "muc#roomconfig_roomdesc" },
+                xml("value", {}, description)
+              ),
+              xml(
+                "field",
+                { var: "muc#roomconfig_publicroom" },
+                xml("value", {}, isPublic ? "1" : "0")
+              ),
+              xml(
+                "field",
+                { var: "muc#roomconfig_persistentroom" },
+                xml("value", {}, "1")
+              ),
+              xml(
+                "field",
+                { var: "muc#roomconfig_membersonly" },
+                xml("value", {}, isPublic ? "0" : "1")
+              ),
+              xml(
+                "field",
+                { var: "muc#roomconfig_allowinvites" },
+                xml("value", {}, "1")
+              )
+            )
+          )
+        );
+        xmppRef.current.send(configureIQ);
 
         // Add the new group to the state
         setGroups((prevGroups) => [
@@ -1097,11 +1175,20 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
             jid: roomJid,
             name: groupName,
             participants: [usernameRef.current],
+            isPublic,
+            description,
+            isJoined: true,
+            requiresInvite: !isPublic,
           },
         ]);
+
+        // Add the room to bookmarks
+        addBookmark(roomJid, groupName, true);
+
+        return roomJid;
       }
     },
-    [xmppOptions.mucService]
+    [xmppOptions.mucService, addBookmark]
   );
 
   const inviteToGroup = useCallback((groupJid: string, userJid: string) => {

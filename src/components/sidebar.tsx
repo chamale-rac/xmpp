@@ -1,12 +1,6 @@
-import {
-  Bell,
-  CirclePlus,
-  ContactRound,
-  Group,
-  UsersRound,
-} from "lucide-react";
+import { Bell, CirclePlus, ContactRound, Group } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -32,6 +26,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import CreateGroup from "./CreateGroup";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -110,15 +105,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                 <div className="grid gap-4">
                   <div className="grid gap-2 ">
                     <AddConversation />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1.5 items-center justify-start"
-                      onClick={() => {}}
-                    >
-                      <UsersRound size={20} />
-                      <span>Create Group Chat</span>
-                    </Button>
+                    <CreateGroup />
                     <AddContact />
                   </div>
                 </div>

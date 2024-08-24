@@ -88,7 +88,14 @@ interface XmppContextProps {
   addConversation: (jid: string) => void;
   requestUploadSlot: (file: File, to: string) => void;
   groups: Group[];
-  createGroup: (groupName: string) => void;
+  createGroup: (
+    groupName: string,
+    options?: {
+      description?: string;
+      isPublic?: boolean;
+      customAddress?: string;
+    }
+  ) => string | undefined;
   joinGroup: (roomJid: string) => void;
   inviteToGroup: (groupJid: string, userJid: string) => void;
   groupInvitations: GroupInvitation[];
