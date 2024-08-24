@@ -33,7 +33,7 @@ export default function ChatTopbar() {
               {selectedContact.name}
               <span className="text-zinc-500">
                 {" ⌁ "}
-                {selectedType && selectedType}
+                {selectedType === "contact" ? "user" : "group"}
               </span>
             </span>
             <span className="text-xs">{selectedContact.show}</span>

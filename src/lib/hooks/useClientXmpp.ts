@@ -719,6 +719,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       .getChild("query", "jabber:iq:roster")
       .getChildren("item");
 
+    console.log("Roster items:", items);
+
     setContacts((prevContacts) => {
       let updatedContacts = [...prevContacts];
       items.forEach((item: any) => {
@@ -817,6 +819,17 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         id = uuidv4();
       }
 
+      // Check if the user already exists in the contacts
+      const contactExists = contacts.some((contact) => contact.jid === from);
+      if (!contactExists) {
+        setContacts((prevContacts) => [
+          ...prevContacts,
+          { jid: from, name: from.split("@")[0] },
+        ]);
+
+        addConversation(from);
+      }
+
       // console.log("Message:", { contactJid, from, to, body });
       setMessages((prevMessages) => {
         const newMessage = { id, from, to, body, timestamp: new Date() };
@@ -903,10 +916,44 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const addConversation = useCallback(
     (jid: string) => {
       if (xmppRef.current) {
-        // Send a presence probe to check the contact's status
-        xmppRef.current.send(xml("presence", { to: jid, type: "probe" }));
+        // // Send a presence probe to check the contact's status
+        // xmppRef.current.send(xml("presence", { to: jid, type: "probe" }));
 
-        // Update the roster after sending the probe
+        // Add the contact to the roster without requesting subscription
+        const rosterIQ = xml(
+          "iq",
+          { type: "set", id: "roster_add_1" },
+          xml(
+            "query",
+            { xmlns: "jabber:iq:roster" },
+            xml("item", { jid: jid, subscription: "none" })
+          )
+        );
+        xmppRef.current.send(rosterIQ);
+
+        // Update local state to reflect the new conversation
+        setContacts((prevContacts) => {
+          const contactExists = prevContacts.some(
+            (contact) => contact.jid === jid
+          );
+          if (!contactExists) {
+            return [
+              ...prevContacts,
+              { jid, name: jid.split("@")[0], subscription: "none" },
+            ];
+          }
+          return prevContacts;
+        });
+
+        // Create an empty message array for the contact if it doesn't exist
+        setMessages((prevMessages) => {
+          if (!prevMessages[jid]) {
+            return { ...prevMessages, [jid]: [] };
+          }
+          return prevMessages;
+        });
+
+        // Optionally, you can still request the roster to ensure server-side synchronization
         requestRoster();
       }
     },
