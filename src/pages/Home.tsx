@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 import { useEffect } from "react";
+import { ModeToggle } from "@/components/mode-toggle";
 
 interface testCredentials {
   username: string;
@@ -13,7 +14,7 @@ interface testCredentials {
 }
 
 const testCredentials: testCredentials = {
-  username: "cha21881dos",
+  username: "cha21881clean",
   password: "admin",
 };
 
@@ -32,28 +33,31 @@ export default function Home() {
 
   return (
     <main className="flex h-[calc(100dvh)] flex-col items-center justify-center p-4 md:px-24 py-32 gap-4">
-      <div className="flex justify-between max-w-5xl w-full items-center">
-        <a href="#" className="text-4xl font-bold text-gradient">
+      <div className="flex justify-between max-w-7xl w-full items-center">
+        <a href="#" className="text-4xl font-bold">
           xmpp ༼ つ ◕_◕ ༽つ
         </a>
         {/* https://tailwindcss.com/docs/mix-blend-mode */}
-        <a
-          target="_blank"
-          href="https://github.com/chamale-rac/xmpp"
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "icon" }),
-            "h-10 w-10"
-          )}
-        >
-          <GitHubLogoIcon className="w-7 h-7 text-muted-foreground" />
-        </a>
+        <div className="grid gap-2 grid-cols-2">
+          <ModeToggle />
+          <a
+            target="_blank"
+            href="https://github.com/chamale-rac/xmpp"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "h-10 w-10"
+            )}
+          >
+            <GitHubLogoIcon className="w-7 h-7 text-muted-foreground" />
+          </a>
+        </div>
       </div>
 
-      <div className="z-10 border rounded-lg max-w-5xl w-full h-[640px] text-sm lg:flex">
+      <div className="z-10 border rounded-lg max-w-7xl w-full min-h-[640px] md:min-h-[740px] text-sm lg:flex">
         <ChatLayout defaultLayout={defaultLayout} navCollapsedSize={8} />
       </div>
 
-      <div className="flex justify-between max-w-5xl w-full items-start text-xs md:text-sm text-muted-foreground ">
+      <div className="flex justify-between max-w-7xl w-full items-start text-xs md:text-sm text-muted-foreground ">
         <p></p>
         <p className="max-w-[150px] sm:max-w-lg text-right">
           {isConnected ? "Connected" : "Disconnected"} to{" "}

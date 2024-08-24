@@ -87,7 +87,8 @@ const Profile = ({
                     className={cn(
                       buttonVariants({ variant: "grey", size: "icon" }),
                       "h-11 w-11 md:h-16 md:w-16",
-                      "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                      "dark:bg-muted/40  dark:text-muted-foreground dark:hover:bg-muted/50 dark:hover:text-white",
+                      " border rounded-md"
                     )}
                   >
                     <Avatar className="flex justify-center items-center  rounded-3xl border">
@@ -114,8 +115,9 @@ const Profile = ({
             <a
               className={cn(
                 buttonVariants({ variant: "grey", size: "xl" }),
-                "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
-                "justify-start gap-4 w-full cursor-pointer"
+                "dark:bg-muted/30  dark:text-white dark:hover:bg-muted/50 dark:hover:text-white shrink",
+                "justify-start gap-4 cursor-pointer  w-full",
+                " border rounded-md"
               )}
             >
               <Avatar className="flex justify-center items-center rounded-3xl border">

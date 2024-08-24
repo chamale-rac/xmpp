@@ -34,7 +34,7 @@ const Inbox = () => {
           <button
             className={cn(
               buttonVariants({ variant: "ghost", size: "lg" }),
-              "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
+              " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
               "gap-4 px-4 w-full my-2"
             )}
             key={request.from + request.message}
@@ -80,7 +80,7 @@ const Inbox = () => {
           <button
             className={cn(
               buttonVariants({ variant: "ghost", size: "lg" }),
-              "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
+              " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
               "gap-4 px-4 w-full my-2"
             )}
             key={invitation.from + invitation.inviter}

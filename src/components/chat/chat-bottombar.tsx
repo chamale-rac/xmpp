@@ -105,7 +105,7 @@ export default function ChatBottombar({ sendMessage }: ChatBottombarProps) {
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "icon" }),
                   "h-9 w-9",
-                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                  "dark:bg-muted/30  dark:text-muted-foreground dark:hover:bg-muted/50 dark:hover:text-white"
                 )}
               >
                 <Paperclip size={20} className="text-muted-foreground" />
@@ -162,7 +162,7 @@ export default function ChatBottombar({ sendMessage }: ChatBottombarProps) {
             className={cn(
               buttonVariants({ variant: "ghost", size: "icon" }),
               "h-9 w-9",
-              "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0"
+              "dark:bg-muted/30  dark:text-muted-foreground dark:hover:bg-muted/50 dark:hover:text-white shrink-0"
             )}
             onClick={handleSend}
           >
@@ -174,7 +174,7 @@ export default function ChatBottombar({ sendMessage }: ChatBottombarProps) {
             className={cn(
               buttonVariants({ variant: "ghost", size: "icon" }),
               "h-9 w-9",
-              "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0"
+              "dark:bg-muted/30  dark:text-muted-foreground dark:hover:bg-muted/50 dark:hover:text-white shrink-0"
             )}
             onClick={handleThumbsUp}
           >

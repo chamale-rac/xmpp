@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-
+import { ThemeProvider } from "@/lib/theme-provider";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import App from "./App.tsx";
@@ -36,10 +36,12 @@ const router = createBrowserRouter([
 ]);
 
 createRoot(document.getElementById("root")!).render(
-  <XmppProvider>
-    <RouterProvider router={router} />
-    <Toaster />
-  </XmppProvider>
+  <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <XmppProvider>
+      <RouterProvider router={router} />
+      <Toaster />
+    </XmppProvider>
+  </ThemeProvider>
 );
 
 {

@@ -41,7 +41,7 @@ const FileUpload = () => {
       <div
         {...getRootProps({
           className:
-            "rounded-lg bg-card text-card-foreground flex justify-center items-center hover:bg-border transition duration-150 ease-in-out cursor-pointer text-center w-full",
+            "rounded-lg bg-card text-card-foreground flex justify-center items-center hover:bg-border/60 transition duration-150 ease-in-out cursor-pointer text-center w-full",
         })}
       >
         <input {...getInputProps()} />

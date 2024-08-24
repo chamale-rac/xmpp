@@ -210,9 +210,12 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
     if (body) {
       // get timestamp from the delay element
-      const timestamp = new Date(
-        stanza.getChild("delay", "urn:xmpp:delay").getAttr("stamp")
-      );
+      let timestamp = new Date();
+      if (stanza.getChild("delay", "urn:xmpp:delay")) {
+        timestamp = new Date(
+          stanza.getChild("delay", "urn:xmpp:delay").getAttr("stamp")
+        );
+      }
 
       setMessages((prevMessages) => {
         const newMessage = {
@@ -658,10 +661,10 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     let show = stanza.getChildText("show") || "chat";
 
     if (type === "unavailable") {
-      status = "";
+      status = "unknown";
       show = "offline";
     } else if (type === "error") {
-      status = "";
+      status = "unknown";
       show = "unknown";
     }
 
@@ -748,6 +751,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
             jid,
             name,
             subscription,
+            show: "unknown",
+            status: "unknown",
           });
         } else {
           // just update the subscription status

@@ -98,7 +98,7 @@ export function ChatList({ messages, sendMessage, isMobile }: ChatListProps) {
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <div className="bg-accent p-3 rounded-md">
+                <div className="bg-accent dark:bg-accent/45 p-3 rounded-md">
                   {selectedType === "group" && (
                     <div
                       className={cn(

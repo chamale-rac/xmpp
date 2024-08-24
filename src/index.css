@@ -64,9 +64,13 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground gag font-sans antialiased mix-blend-exclusion;
+    @apply bg-background text-foreground  font-sans antialiased;
   }
 }
+
+/*
+gag mix-blend-exclusion
+  */
 
 .text-gradient {
   background: linear-gradient(90deg, #6366f1, rgba(168, 85, 247, 0.8));

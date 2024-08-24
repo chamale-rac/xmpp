@@ -1,4 +1,11 @@
-import { Bell, CirclePlus, ContactRound, Group } from "lucide-react";
+import {
+  Bell,
+  CirclePlus,
+  Globe,
+  UserRoundCheck,
+  UserRoundX,
+  UsersRound,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -27,6 +34,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import CreateGroup from "./CreateGroup";
+import StatusBadge from "./StatusBadge";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -43,6 +51,9 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
     gettingGroups,
     setSelectedGroup,
     setSelectedType,
+    selectedContact,
+    selectedGroup,
+    selectedType,
   } = useXmpp();
 
   return (
@@ -120,7 +131,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
             {/** SUBSCRIBED */}
             <AccordionTrigger hideChevron={isCollapsed}>
               {!isCollapsed ? (
-                <h1 className=" text-lg text-gray-700">
+                <h1 className=" text-lg  opacity-85">
                   Subscribed{" "}
                   {!gettingContacts &&
                     `(${
@@ -137,14 +148,14 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                       size: "icon",
                     }),
                     "h-11 w-11 md:h-16 md:w-16",
-                    "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                    " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer"
                   )}
                 >
-                  <ContactRound size={20} />
+                  <UserRoundCheck size={20} />
                 </div>
               )}
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="gap-2 grid">
               {gettingContacts
                 ? isCollapsed
                   ? Array.from({ length: 3 }).map((_, index) => (
@@ -179,15 +190,19 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                     variant: "ghost",
                                     size: "icon",
                                   }),
-                                  "h-11 w-11 md:h-16 md:w-16",
-                                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                                  "h-11 w-11 md:h-16 md:w-16 relative",
+                                  " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer ",
+                                  selectedType === "contact" &&
+                                    selectedContact!.jid === contact.jid
+                                    ? "bg-muted dark:bg-muted/50"
+                                    : ""
                                 )}
                                 onClick={() => {
                                   setSelectedType("contact");
                                   setSelectedContact(contact);
                                 }}
                               >
-                                <Avatar className="flex justify-center items-center  rounded-3xl border">
+                                <Avatar className="flex justify-center items-center  rounded-none ">
                                   {contact.pfp ? (
                                     <img
                                       src={contact.pfp}
@@ -195,14 +210,18 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                       className="rounded-3xl"
                                     />
                                   ) : (
-                                    <AvatarFallback>
+                                    <AvatarFallback className="rounded-3xl">
                                       {contact.name &&
                                         contact.name
                                           .split(" ")[0][0]
                                           .toLocaleUpperCase()}
                                     </AvatarFallback>
                                   )}
-                                </Avatar>{" "}
+                                  <StatusBadge
+                                    className="absolute bottom-0 right-0"
+                                    status={contact.show}
+                                  />
+                                </Avatar>
                                 <span className="sr-only">{contact.name}</span>
                               </a>
                             </TooltipTrigger>
@@ -219,15 +238,19 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           key={index}
                           className={cn(
                             buttonVariants({ variant: "ghost", size: "xl" }),
-                            "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
-                            "justify-start gap-4 cursor-pointer w-full"
+                            " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
+                            "justify-start gap-4 cursor-pointer w-full",
+                            selectedType === "contact" &&
+                              selectedContact!.jid === contact.jid
+                              ? "bg-muted dark:bg-muted/50"
+                              : ""
                           )}
                           onClick={() => {
                             setSelectedType("contact");
                             setSelectedContact(contact);
                           }}
                         >
-                          <Avatar className="flex justify-center items-center rounded-3xl border">
+                          <Avatar className="flex justify-center items-center relative rounded-none">
                             <AvatarFallback>
                               {contact.pfp ? (
                                 <img
@@ -244,6 +267,10 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                 </AvatarFallback>
                               )}
                             </AvatarFallback>
+                            <StatusBadge
+                              className="absolute bottom-0 right-0"
+                              status={contact.show}
+                            />
                           </Avatar>
                           <div className="flex flex-col max-w-28">
                             <span>{contact.name}</span>
@@ -260,7 +287,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
             {/** CONTACTS */}
             <AccordionTrigger hideChevron={isCollapsed}>
               {!isCollapsed ? (
-                <h1 className=" text-lg text-gray-700">
+                <h1 className=" text-lg opacity-85">
                   Unsubscribed{" "}
                   {!gettingContacts &&
                     `(${
@@ -277,14 +304,14 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                       size: "icon",
                     }),
                     "h-11 w-11 md:h-16 md:w-16",
-                    "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                    " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer"
                   )}
                 >
-                  <ContactRound size={20} />
+                  <UserRoundX size={20} />
                 </div>
               )}
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="gap-2 grid">
               {gettingContacts
                 ? isCollapsed
                   ? Array.from({ length: 3 }).map((_, index) => (
@@ -319,30 +346,40 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                     variant: "ghost",
                                     size: "icon",
                                   }),
-                                  "h-11 w-11 md:h-16 md:w-16",
-                                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                                  "h-11 w-11 md:h-16 md:w-16 relative",
+                                  " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer",
+                                  selectedType === "contact" &&
+                                    selectedContact!.jid === contact.jid
+                                    ? "bg-muted dark:bg-muted/50"
+                                    : ""
                                 )}
                                 onClick={() => {
                                   setSelectedType("contact");
                                   setSelectedContact(contact);
                                 }}
                               >
-                                <Avatar className="flex justify-center items-center  rounded-3xl border">
-                                  {contact.pfp ? (
-                                    <img
-                                      src={contact.pfp}
-                                      alt={contact.name}
-                                      className="rounded-3xl"
-                                    />
-                                  ) : (
-                                    <AvatarFallback>
-                                      {contact.name &&
-                                        contact.name
-                                          .split(" ")[0][0]
-                                          .toLocaleUpperCase()}
-                                    </AvatarFallback>
-                                  )}
-                                </Avatar>{" "}
+                                <Avatar className="flex justify-center items-center relative rounded-none">
+                                  <AvatarFallback>
+                                    {contact.pfp ? (
+                                      <img
+                                        src={contact.pfp}
+                                        alt={contact.name}
+                                        className="rounded-3xl"
+                                      />
+                                    ) : (
+                                      <AvatarFallback>
+                                        {contact.name &&
+                                          contact.name
+                                            .split(" ")[0][0]
+                                            .toLocaleUpperCase()}
+                                      </AvatarFallback>
+                                    )}
+                                  </AvatarFallback>
+                                  <StatusBadge
+                                    className="absolute bottom-0 right-0"
+                                    status={contact.show}
+                                  />
+                                </Avatar>
                                 <span className="sr-only">{contact.name}</span>
                               </a>
                             </TooltipTrigger>
@@ -359,15 +396,19 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           key={index}
                           className={cn(
                             buttonVariants({ variant: "ghost", size: "xl" }),
-                            "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
-                            "justify-start gap-4 cursor-pointer w-full"
+                            " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
+                            "justify-start gap-4 cursor-pointer w-full",
+                            selectedType === "contact" &&
+                              selectedContact!.jid === contact.jid
+                              ? "bg-muted dark:bg-muted/50"
+                              : ""
                           )}
                           onClick={() => {
                             setSelectedType("contact");
                             setSelectedContact(contact);
                           }}
                         >
-                          <Avatar className="flex justify-center items-center rounded-3xl border">
+                          <Avatar className="flex justify-center items-center relative rounded-none">
                             <AvatarFallback>
                               {contact.pfp ? (
                                 <img
@@ -384,6 +425,10 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                 </AvatarFallback>
                               )}
                             </AvatarFallback>
+                            <StatusBadge
+                              className="absolute bottom-0 right-0"
+                              status={contact.show}
+                            />
                           </Avatar>
                           <div className="flex flex-col max-w-28">
                             <span>{contact.name}</span>
@@ -400,7 +445,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
             {/** PUBLIC GROUPS */}
             <AccordionTrigger hideChevron={isCollapsed}>
               {!isCollapsed ? (
-                <h1 className=" text-lg text-gray-700">
+                <h1 className=" text-lg opacity-85">
                   Joined Groups{" "}
                   {!gettingGroups &&
                     `(${groups.filter((group) => group.isJoined).length})`}
@@ -413,14 +458,14 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                       size: "icon",
                     }),
                     "h-11 w-11 md:h-16 md:w-16",
-                    "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                    " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer"
                   )}
                 >
-                  <Group size={20} />
+                  <UsersRound size={20} />
                 </div>
               )}
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="gap-2 grid">
               {gettingGroups
                 ? isCollapsed
                   ? Array.from({ length: 3 }).map((_, index) => (
@@ -456,20 +501,30 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                     size: "icon",
                                   }),
                                   "h-11 w-11 md:h-16 md:w-16",
-                                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                                  " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer",
+                                  selectedType === "group" &&
+                                    selectedGroup!.jid === contact.jid
+                                    ? "bg-muted dark:bg-muted/50"
+                                    : ""
                                 )}
                                 onClick={() => {
                                   setSelectedType("group");
                                   setSelectedGroup(contact);
                                 }}
                               >
-                                <Avatar className="flex justify-center items-center  rounded-3xl border">
-                                  <AvatarFallback>
+                                <Avatar className="flex justify-center items-center rounded-none">
+                                  <AvatarFallback className="rounded-3xl">
                                     {contact.name &&
                                       contact.name
                                         .split(" ")[0][0]
                                         .toLocaleUpperCase()}
                                   </AvatarFallback>
+                                  <StatusBadge
+                                    className="absolute bottom-0 right-0 !rounded-none h-4 w-4"
+                                    status={
+                                      contact.isPublic ? "public" : "private"
+                                    }
+                                  />
                                 </Avatar>{" "}
                                 <span className="sr-only">{contact.name}</span>
                               </a>
@@ -487,23 +542,32 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           key={index}
                           className={cn(
                             buttonVariants({ variant: "ghost", size: "xl" }),
-                            "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
-                            "justify-start gap-4 cursor-pointer  w-full"
+                            " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
+                            "justify-start gap-4 cursor-pointer  w-full",
+                            selectedType === "group" &&
+                              selectedGroup!.jid === contact.jid
+                              ? "bg-muted dark:bg-muted/50"
+                              : ""
                           )}
                           onClick={() => {
                             setSelectedGroup(contact);
                             setSelectedType("group");
                           }}
                         >
-                          <Avatar className="flex justify-center items-center rounded-3xl border">
+                          <Avatar className="flex justify-center items-center rounded-none">
                             <AvatarFallback>
-                              <AvatarFallback>
+                              <AvatarFallback className="rounded-3xl">
                                 {contact.name &&
                                   contact.name
                                     .split(" ")[0][0]
                                     .toLocaleUpperCase()}
                               </AvatarFallback>
                             </AvatarFallback>
+
+                            <StatusBadge
+                              className="absolute bottom-0 right-0 !rounded-none "
+                              status={contact.isPublic ? "public" : "private"}
+                            />
                           </Avatar>
                           <div className="flex flex-col max-w-28">
                             <span>{contact.name}</span>
@@ -520,7 +584,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
             {/** PUBLIC GROUPS */}
             <AccordionTrigger hideChevron={isCollapsed}>
               {!isCollapsed ? (
-                <h1 className=" text-lg text-gray-700">
+                <h1 className=" text-lg opacity-85">
                   Public Groups{" "}
                   {!gettingGroups &&
                     `(${groups.filter((group) => group.isPublic).length})`}
@@ -533,14 +597,14 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                       size: "icon",
                     }),
                     "h-11 w-11 md:h-16 md:w-16",
-                    "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                    " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer"
                   )}
                 >
-                  <Group size={20} />
+                  <Globe size={20} />
                 </div>
               )}
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="gap-2 grid">
               {gettingGroups
                 ? isCollapsed
                   ? Array.from({ length: 3 }).map((_, index) => (
@@ -576,7 +640,11 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                     size: "icon",
                                   }),
                                   "h-11 w-11 md:h-16 md:w-16",
-                                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white cursor-pointer"
+                                  " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer",
+                                  selectedType === "group" &&
+                                    selectedGroup!.jid === contact.jid
+                                    ? "bg-muted dark:bg-muted/50"
+                                    : ""
                                 )}
                                 onClick={() => {
                                   setSelectedType("group");
@@ -607,8 +675,12 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           key={index}
                           className={cn(
                             buttonVariants({ variant: "ghost", size: "xl" }),
-                            "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
-                            "justify-start gap-4 cursor-pointer  w-full"
+                            " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
+                            "justify-start gap-4 cursor-pointer  w-full",
+                            selectedType === "group" &&
+                              selectedGroup!.jid === contact.jid
+                              ? "bg-muted dark:bg-muted/50"
+                              : ""
                           )}
                           onClick={() => {
                             setSelectedGroup(contact);
@@ -638,7 +710,10 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
           </AccordionItem>
         </Accordion>
       </nav>
-      <Profile className="mt-auto" isCollapsed={isCollapsed} />
+      <Profile
+        className="mt-auto self-center items-center flex justify-center w-full"
+        isCollapsed={isCollapsed}
+      />
     </div>
   );
 }

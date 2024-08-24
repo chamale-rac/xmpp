@@ -58,7 +58,8 @@ export function ChatLayout({
           sizes
         )}`;
       }}
-      className="h-full items-stretch rounded-lg gag "
+      className="h-full items-stretch rounded-lg"
+      // gag
     >
       <ResizablePanel
         defaultSize={defaultLayout[0]}
@@ -95,9 +96,9 @@ export function ChatLayout({
           ) : (
             <div className="flex flex-col gap-1 items-center text-center text-sm h-full justify-center">
               <CircleSlash className="w-12 h-12 text-zinc-500/40" />
-              <div className="text-zinc-800 text-lg">
+              <div className="text-zinc-500 text-lg">
                 You are not a member of{" "}
-                <span className="text-black font-semibold">
+                <span className="dark:text-white/65 text-black font-semibold">
                   {selectedGroup?.name}
                 </span>{" "}
                 group <br />
