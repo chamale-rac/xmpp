@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import {
   Dialog,
