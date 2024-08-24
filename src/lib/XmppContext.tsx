@@ -4,7 +4,7 @@ import { useEphemeralXmpp } from "@/lib/hooks/useEphemeralXmpp";
 import { useXmppClient } from "@/lib/hooks/useClientXmpp";
 
 const globalXmppOptions = {
-  service: "ws://alumchat.lol:7070/ws",
+  service: "wss://alumchat.lol:7443/ws",
   domain: "alumchat.lol",
   resource: "",
   mucService: "conference.alumchat.lol",
