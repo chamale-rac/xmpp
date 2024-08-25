@@ -625,6 +625,20 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         ...prev,
         [selectedContact.jid]: true,
       }));
+
+      if (
+        selectedContact.jid ===
+        usernameRef.current + "@" + xmppOptions.domain
+      ) {
+        // mark all the elements as true
+        setHistoryFetched((prev) => {
+          const newHistoryFetched = { ...prev };
+          contacts.forEach((contact) => {
+            newHistoryFetched[contact.jid] = true;
+          });
+          return newHistoryFetched;
+        });
+      }
     }
   }, [selectedContact, historyFetched]);
 

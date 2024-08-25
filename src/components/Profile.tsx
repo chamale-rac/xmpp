@@ -27,6 +27,7 @@ import { useXmpp } from "@/lib/hooks/useXmpp";
 import { Send, Undo } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import StatusBadge from "./StatusBadge";
 
 const Profile = ({
   isCollapsed,
@@ -120,13 +121,17 @@ const Profile = ({
                 " border rounded-md"
               )}
             >
-              <Avatar className="flex justify-center items-center rounded-3xl border">
-                <AvatarFallback>
+              <Avatar className="flex justify-center items-center rounded-none">
+                <AvatarFallback className="rounded-3xl">
                   {
                     // Get initials from name
                     username && username.split(" ")[0][0].toLocaleUpperCase()
                   }
                 </AvatarFallback>
+                <StatusBadge
+                  status={status}
+                  className="absolute right-0 bottom-0"
+                />
               </Avatar>
               <div className="flex flex-col max-w-full truncate">
                 <span>{username}</span>
