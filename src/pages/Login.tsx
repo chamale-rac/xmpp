@@ -20,13 +20,14 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
+import { ModeToggle } from "@/components/mode-toggle";
 
 interface loginResolve {
   name: string;
 }
 
 const Login = () => {
-  const { checkXmppUser, closeSession } = useXmpp();
+  const { checkXmppUser, closeSession, globalXmppOptions } = useXmpp();
   const { login } = useUser();
   const navigate = useNavigate();
 
@@ -77,7 +78,9 @@ const Login = () => {
           XMPP Chat
         </Link>
         <NavigationMenu>
-          <NavigationMenuList className="flex gap-4"></NavigationMenuList>
+          <NavigationMenuList className="flex gap-4">
+            <ModeToggle />
+          </NavigationMenuList>
         </NavigationMenu>
       </div>
       <MaxWidthWrapper className="flex items-center justify-center">
@@ -85,7 +88,11 @@ const Login = () => {
           <CardHeader>
             <CardTitle className="text-2xl">Login</CardTitle>
             <CardDescription>
-              Enter your username below to login to your account
+              Enter your username below to login to your account. You will be
+              connected to{" "}
+              <span className="font-bold underline">
+                {globalXmppOptions.domain}
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -100,7 +107,12 @@ const Login = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
-                  />
+                  />{" "}
+                  {username.includes("@") && username.length > 0 && (
+                    <div className="text-red-400 text-xs truncate max-w-fit mt-1.5">
+                      Username should not include domain. e.g. user
+                    </div>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">

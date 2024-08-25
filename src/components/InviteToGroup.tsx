@@ -17,7 +17,7 @@ import { Textarea } from "./ui/textarea";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 
 const InviteToGroup = () => {
-  const { inviteToGroup, selectedGroup } = useXmpp();
+  const { inviteToGroup, selectedGroup, globalXmppOptions } = useXmpp();
   const [invitees, setInvitees] = useState("");
   const [reason, setReason] = useState("");
 
@@ -75,7 +75,7 @@ const InviteToGroup = () => {
                   </Label>
                   <Input
                     id="invitees"
-                    placeholder="x@alumchat.lol, y@alumchat.lol"
+                    placeholder={`x@${globalXmppOptions.domain}, y@${globalXmppOptions.domain}`}
                     onChange={(e) => setInvitees(e.target.value)}
                     value={invitees}
                     required

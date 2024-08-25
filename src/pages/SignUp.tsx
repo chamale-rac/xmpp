@@ -20,6 +20,7 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
+import { ModeToggle } from "@/components/mode-toggle";
 
 interface signUpResolve {
   name: string;
@@ -28,7 +29,7 @@ interface signUpResolve {
 const SignUp = () => {
   const { login } = useUser();
   const navigate = useNavigate();
-  const { registerXmppUser, closeSession } = useXmpp();
+  const { registerXmppUser, closeSession, globalXmppOptions } = useXmpp();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -84,7 +85,9 @@ const SignUp = () => {
           XMPP Chat
         </Link>
         <NavigationMenu>
-          <NavigationMenuList className="flex gap-4"></NavigationMenuList>
+          <NavigationMenuList className="flex gap-4">
+            <ModeToggle />
+          </NavigationMenuList>
         </NavigationMenu>
       </div>
       <MaxWidthWrapper className="flex items-center justify-center">
@@ -92,7 +95,11 @@ const SignUp = () => {
           <CardHeader>
             <CardTitle className="text-2xl">Sign Up</CardTitle>
             <CardDescription>
-              Enter your information to create an account
+              Enter your information to create an account. You will be connected
+              to{" "}
+              <span className="font-bold underline">
+                {globalXmppOptions.domain}
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -108,6 +115,11 @@ const SignUp = () => {
                     onChange={(e) => setUsername(e.target.value)}
                     required
                   />
+                  {username.includes("@") && username.length > 0 && (
+                    <div className="text-red-400 text-xs truncate max-w-fit mt-1.5">
+                      Username should not include domain. e.g. user
+                    </div>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">

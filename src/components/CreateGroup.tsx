@@ -18,7 +18,7 @@ import { Textarea } from "./ui/textarea";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 
 const CreateGroup = () => {
-  const { createGroup } = useXmpp();
+  const { createGroup, globalXmppOptions } = useXmpp();
   const [groupName, setGroupName] = useState("");
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -98,9 +98,9 @@ const CreateGroup = () => {
                     id="customAddress"
                     placeholder={
                       groupName
-                        ? `${groupName
-                            .toLowerCase()
-                            .replace(/\s/g, "-")}@conference.alumchat.lol`
+                        ? `${groupName.toLowerCase().replace(/\s/g, "-")}@${
+                            globalXmppOptions.mucService
+                          }`
                         : ""
                     }
                     onChange={(e) => setCustomAddress(e.target.value)}

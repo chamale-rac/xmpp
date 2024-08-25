@@ -60,7 +60,7 @@ const AddConversation = () => {
                   type="email"
                 />{" "}
                 {!isValidEmail(address) && address.length > 0 && (
-                  <div className="text-zinc-400 text-xs truncate max-w-fit mt-1.5">
+                  <div className="text-red-400 text-xs truncate max-w-fit mt-1.5">
                     Input needs to be a valid XMPP address. e.g. x@x.x
                   </div>
                 )}

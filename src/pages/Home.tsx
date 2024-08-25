@@ -15,7 +15,8 @@ import { Progress } from "@/components/ui/progress";
 export default function Home() {
   const { user } = useUser();
   const navigate = useNavigate();
-  const { isConnected, triggerConnection, closeSession } = useXmpp();
+  const { isConnected, triggerConnection, closeSession, globalXmppOptions } =
+    useXmpp();
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -112,11 +113,11 @@ export default function Home() {
         <p className="max-w-[150px] sm:max-w-lg text-right">
           {isConnected ? "Connected" : "Disconnected"} to{" "}
           <a
-            className="font-semibold"
-            href="http://alumchat.lol"
+            className="font-semibold underline"
+            href={`http://${globalXmppOptions.domain}`}
             target="_blank"
           >
-            alumchat.lol
+            {globalXmppOptions.domain}
           </a>
           {isConnected ? (
             <CircleCheck className="w-4 h-4 inline-block ml-1 mb-1" />

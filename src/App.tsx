@@ -14,6 +14,7 @@ import {
   NavigationMenuList,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
+import { ModeToggle } from "./components/mode-toggle";
 
 export default function LandingPage() {
   return (
@@ -28,6 +29,7 @@ export default function LandingPage() {
         </Link>
         <NavigationMenu>
           <NavigationMenuList className="flex gap-4">
+            <ModeToggle />
             <NavigationMenuLink asChild>
               <Link
                 to={"/login"}
