@@ -103,7 +103,8 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="z-10 border rounded-lg max-w-7xl w-full min-h-[640px] md:min-h-[740px] text-sm lg:flex">
+      <div className="z-10 border rounded-lg max-w-7xl w-full min-h-[640px] md:min-h-[80vh] text-sm lg:flex">
+        {/**md:min-h-[80vh] md:min-h-[700px] md:min-h-[740px]*/}
         <ChatLayout defaultLayout={defaultLayout} navCollapsedSize={8} />
       </div>
 

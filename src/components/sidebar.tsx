@@ -53,6 +53,8 @@ import StatusBadge from "./StatusBadge";
 import DeleteAccount from "./DeleteAccount";
 import { useUser } from "@/lib/UserContext";
 import { useNavigate } from "react-router-dom";
+import { Input } from "./ui/input";
+import { useState } from "react";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -63,6 +65,7 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed }: SidebarProps) {
   const { logout } = useUser();
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
 
   const {
     contacts,
@@ -90,14 +93,6 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
         <div className="flex justify-between p-2 items-center">
           <div className="flex gap-2 items-center text-2xl">
             <p className="font-medium">Chats</p>
-            {/* <span className="text-zinc-500">
-              (
-              {gettingContacts || gettingGroups
-                ? "?"
-                : contacts.length +
-                  groups.filter((group) => group.isJoined).length}
-              )
-            </span> */}
           </div>
 
           <div>
@@ -190,6 +185,16 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
           </div>
         </div>
       )}
+      {!isCollapsed && (
+        <div className="px-1">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or jid"
+            className="w-full h-9 px-2 py-1.5 bg-muted dark:bg-muted/30 dark:text-white dark:placeholder-gray-300/50 rounded-lg"
+          />
+        </div>
+      )}
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2 overflow-y-auto overflow-x-hidden">
         <Accordion type="multiple" className="w-full" defaultValue={["item-1"]}>
           <AccordionItem value="item-1">
@@ -200,11 +205,17 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                   Subscribed{" "}
                   {!gettingContacts &&
                     contacts.filter(
-                      (c) => c.subscription && c.subscription !== "none"
+                      (c) =>
+                        c.subscription &&
+                        c.subscription !== "none" &&
+                        (c.jid.includes(search) || c.name?.includes(search))
                     ).length > 0 &&
                     `(${
                       contacts.filter(
-                        (c) => c.subscription && c.subscription !== "none"
+                        (c) =>
+                          c.subscription &&
+                          c.subscription !== "none" &&
+                          (c.jid.includes(search) || c.name?.includes(search))
                       ).length
                     })`}
                 </h1>
@@ -247,10 +258,18 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                   ))
                 )
               ) : contacts.filter(
-                  (c) => c.subscription && c.subscription !== "none"
+                  (c) =>
+                    c.subscription &&
+                    c.subscription !== "none" &&
+                    (c.jid.includes(search) || c.name?.includes(search))
                 ).length !== 0 ? (
                 contacts
-                  .filter((c) => c.subscription && c.subscription !== "none")
+                  .filter(
+                    (c) =>
+                      c.subscription &&
+                      c.subscription !== "none" &&
+                      (c.jid.includes(search) || c.name?.includes(search))
+                  )
                   .map((contact, index) =>
                     isCollapsed ? (
                       <TooltipProvider key={index}>
@@ -392,11 +411,18 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                   Unsubscribed{" "}
                   {!gettingContacts &&
                     contacts.filter(
-                      (c) => !c.subscription || c.subscription === "none"
+                      (c) =>
+                        !c.subscription ||
+                        (c.subscription === "none" &&
+                          (c.jid.includes(search) || c.name?.includes(search)))
                     ).length > 0 &&
                     `(${
                       contacts.filter(
-                        (c) => !c.subscription || c.subscription === "none"
+                        (c) =>
+                          !c.subscription ||
+                          (c.subscription === "none" &&
+                            (c.jid.includes(search) ||
+                              c.name?.includes(search)))
                       ).length
                     })`}
                 </h1>
@@ -439,10 +465,18 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                   ))
                 )
               ) : contacts.filter(
-                  (c) => !c.subscription || c.subscription === "none"
+                  (c) =>
+                    !c.subscription ||
+                    (c.subscription === "none" &&
+                      (c.jid.includes(search) || c.name?.includes(search)))
                 ).length !== 0 ? (
                 contacts
-                  .filter((c) => !c.subscription || c.subscription === "none")
+                  .filter(
+                    (c) =>
+                      !c.subscription ||
+                      (c.subscription === "none" &&
+                        (c.jid.includes(search) || c.name?.includes(search)))
+                  )
                   .map((contact, index) =>
                     isCollapsed ? (
                       <TooltipProvider key={index}>
@@ -585,8 +619,20 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                 <h1 className=" text-lg opacity-85">
                   Joined Groups{" "}
                   {!gettingGroups &&
-                    groups.filter((group) => group.isJoined).length > 0 &&
-                    `(${groups.filter((group) => group.isJoined).length})`}
+                    groups.filter(
+                      (group) =>
+                        group.isJoined &&
+                        (group.jid.includes(search) ||
+                          group.name.includes(search))
+                    ).length > 0 &&
+                    `(${
+                      groups.filter(
+                        (group) =>
+                          group.isJoined &&
+                          (group.jid.includes(search) ||
+                            group.name.includes(search))
+                      ).length
+                    })`}
                 </h1>
               ) : (
                 <div
@@ -626,9 +672,18 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                     </div>
                   ))
                 )
-              ) : groups.filter((group) => group.isJoined).length !== 0 ? (
+              ) : groups.filter(
+                  (group) =>
+                    group.isJoined &&
+                    (group.jid.includes(search) || group.name.includes(search))
+                ).length !== 0 ? (
                 groups
-                  .filter((group) => group.isJoined)
+                  .filter(
+                    (group) =>
+                      group.isJoined &&
+                      (group.jid.includes(search) ||
+                        group.name.includes(search))
+                  )
                   .map((contact, index) =>
                     isCollapsed ? (
                       <TooltipProvider key={index}>
@@ -754,8 +809,20 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                 <h1 className=" text-lg opacity-85">
                   Public Groups{" "}
                   {!gettingGroups &&
-                    groups.filter((group) => group.isPublic).length > 0 &&
-                    `(${groups.filter((group) => group.isPublic).length})`}
+                    groups.filter(
+                      (group) =>
+                        group.isPublic &&
+                        (group.jid.includes(search) ||
+                          group.name.includes(search))
+                    ).length > 0 &&
+                    `(${
+                      groups.filter(
+                        (group) =>
+                          group.isPublic &&
+                          (group.jid.includes(search) ||
+                            group.name.includes(search))
+                      ).length
+                    })`}
                 </h1>
               ) : (
                 <div
@@ -795,9 +862,18 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                     </div>
                   ))
                 )
-              ) : groups.filter((group) => group.isPublic).length !== 0 ? (
+              ) : groups.filter(
+                  (group) =>
+                    group.isPublic &&
+                    (group.jid.includes(search) || group.name.includes(search))
+                ).length !== 0 ? (
                 groups
-                  .filter((group) => group.isPublic)
+                  .filter(
+                    (group) =>
+                      group.isPublic &&
+                      (group.jid.includes(search) ||
+                        group.name.includes(search))
+                  )
                   .map((contact, index) =>
                     isCollapsed ? (
                       <TooltipProvider key={index}>
