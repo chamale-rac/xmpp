@@ -67,6 +67,7 @@ interface UnreadMessages {
 interface XmppContextProps {
   registerXmppUser: (username: string, password: string) => Promise<boolean>;
   checkXmppUser: (username: string, password: string) => Promise<boolean>;
+  deleteXmppUser: (username: string, password: string) => Promise<boolean>;
   isConnected: boolean;
   contacts: Contact[];
   addContact: (
@@ -140,7 +141,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
   const [validUser, setValidUser] = useState<string>();
   const [validPassword, setValidPassword] = useState<string>();
 
-  const { registerXmppUser, checkXmppUser } =
+  const { registerXmppUser, checkXmppUser, deleteXmppUser } =
     useEphemeralXmpp(globalXmppOptions);
 
   const {
@@ -234,6 +235,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         closeSession,
         unreadMessages,
         markConversationAsRead,
+        deleteXmppUser,
       }}
     >
       {children}

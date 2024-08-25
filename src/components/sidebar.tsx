@@ -1,6 +1,7 @@
 import {
   Cat,
   CirclePlus,
+  EllipsisVertical,
   Globe,
   HeartCrack,
   InboxIcon,
@@ -49,6 +50,9 @@ import {
 
 import CreateGroup from "./CreateGroup";
 import StatusBadge from "./StatusBadge";
+import DeleteAccount from "./DeleteAccount";
+import { useUser } from "@/lib/UserContext";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -57,6 +61,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isCollapsed }: SidebarProps) {
+  const { logout } = useUser();
+  const navigate = useNavigate();
+
   const {
     contacts,
     gettingContacts,
@@ -71,6 +78,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
     unreadMessages,
     markConversationAsRead,
     messages,
+    closeSession,
   } = useXmpp();
 
   return (
@@ -144,6 +152,37 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                     <AddConversation />
                     <CreateGroup />
                     <AddContact />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <a
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "icon" }),
+                    "h-9 w-9"
+                  )}
+                >
+                  <EllipsisVertical size={20} />
+                </a>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="max-w-[214px]">
+                <div className="grid gap-4">
+                  <div className="grid gap-2 ">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        logout();
+                        navigate("/login");
+                        closeSession();
+                      }}
+                    >
+                      Logout
+                    </Button>
+                    {/** DELETE ACCOUNT */}
+                    <DeleteAccount />
                   </div>
                 </div>
               </PopoverContent>

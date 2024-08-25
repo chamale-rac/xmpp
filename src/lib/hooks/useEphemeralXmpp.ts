@@ -17,6 +17,7 @@ type CustomError = XMPPError & { code: string };
 export const useEphemeralXmpp = (xmppOptions: XmppConnectionOptions) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const registerXmppUser = async (
@@ -139,11 +140,81 @@ export const useEphemeralXmpp = (xmppOptions: XmppConnectionOptions) => {
     }
   };
 
+  const deleteXmppUser = async (
+    username: string,
+    password: string
+  ): Promise<boolean> => {
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      const xmppConnectionOptions = {
+        service: xmppOptions.service,
+        resource: xmppOptions.resource,
+        username,
+        password,
+      };
+
+      const xmpp = client(xmppConnectionOptions);
+      debug(xmpp, true);
+
+      return new Promise((resolve, reject) => {
+        xmpp.on("error", async (error: CustomError) => {
+          if (error.code === "ECONNERROR") {
+            await xmpp.stop();
+            xmpp.removeAllListeners();
+            reject(
+              "Connection error. Please check your network and try again."
+            );
+          }
+        });
+
+        xmpp.on("online", () => {
+          xmpp.send(
+            xml(
+              "iq",
+              { type: "set", id: "delete-account" },
+              xml("query", { xmlns: "jabber:iq:register" }, xml("remove"))
+            )
+          );
+        });
+
+        xmpp.on("stanza", async (stanza) => {
+          if (stanza.is("iq") && stanza.getAttr("id") === "delete-account") {
+            await xmpp.stop();
+            xmpp.removeAllListeners();
+
+            if (stanza.getAttr("type") === "result") {
+              resolve(true);
+            } else if (stanza.getAttr("type") === "error") {
+              const error = stanza.getChild("error");
+              let errorMessage =
+                "An unknown error occurred while deleting the account. Please try again.";
+              if (error?.getChild("not-allowed")) {
+                errorMessage = "Account deletion is not allowed.";
+              }
+              reject(errorMessage);
+            }
+          }
+        });
+
+        xmpp.start().catch((err) => console.error("xmpp.start", err));
+      });
+    } catch (e) {
+      setError(e as string);
+      throw e;
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return {
     registerXmppUser,
     checkXmppUser,
+    deleteXmppUser,
     isRegistering,
     isChecking,
+    isDeleting,
     error,
   };
 };

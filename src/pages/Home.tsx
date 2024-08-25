@@ -3,7 +3,7 @@ import { ChatLayout } from "@/components/chat/chat-layout";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { AlertCircle, CircleCheck, Loader2, LogOut } from "lucide-react";
+import { AlertCircle, CircleCheck, Loader2 } from "lucide-react";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 import { useEffect, useState } from "react";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -13,7 +13,7 @@ import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 
 export default function Home() {
-  const { user, logout } = useUser();
+  const { user } = useUser();
   const navigate = useNavigate();
   const { isConnected, triggerConnection, closeSession } = useXmpp();
   const [progress, setProgress] = useState(0);
@@ -75,7 +75,7 @@ export default function Home() {
         <a href="#" className="text-4xl font-bold">
           xmpp ༼ つ ◕_◕ ༽つ
         </a>
-        <div className="grid gap-2 grid-cols-3">
+        <div className="grid gap-2 grid-cols-2">
           <ModeToggle />
           <a
             target="_blank"
@@ -87,7 +87,7 @@ export default function Home() {
           >
             <GitHubLogoIcon className="w-7 h-7 text-muted-foreground" />
           </a>
-          <button
+          {/* <button
             className={cn(
               buttonVariants({ variant: "ghost", size: "icon" }),
               "h-10 w-10"
@@ -99,7 +99,7 @@ export default function Home() {
             }}
           >
             <LogOut className="w-7 h-7 text-muted-foreground" />
-          </button>
+          </button> */}
         </div>
       </div>
 
