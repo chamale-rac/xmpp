@@ -1,6 +1,8 @@
 import {
+  Cat,
   CirclePlus,
   Globe,
+  HeartCrack,
   InboxIcon,
   UserRoundCheck,
   UserRoundX,
@@ -158,6 +160,9 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                 <h1 className=" text-lg  opacity-85">
                   Subscribed{" "}
                   {!gettingContacts &&
+                    contacts.filter(
+                      (c) => c.subscription && c.subscription !== "none"
+                    ).length > 0 &&
                     `(${
                       contacts.filter(
                         (c) => c.subscription && c.subscription !== "none"
@@ -180,147 +185,164 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
               )}
             </AccordionTrigger>
             <AccordionContent className="gap-2 grid">
-              {gettingContacts
-                ? isCollapsed
-                  ? Array.from({ length: 3 }).map((_, index) => (
-                      <div key={index} className="h-11 w-11 md:h-16 md:w-16">
-                        <div className="w-full h-full p-3 flex items-center justify-center">
-                          <Skeleton className="rounded-3xl h-9 w-9" />
+              {gettingContacts ? (
+                isCollapsed ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-11 w-11 md:h-16 md:w-16">
+                      <div className="w-full h-full p-3 flex items-center justify-center">
+                        <Skeleton className="rounded-3xl h-9 w-9" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-16 rounded-md px-5 mt-1">
+                      <div className="flex gap-4 items-center">
+                        <Skeleton className="h-11 w-11 rounded-3xl" />
+                        <div className="flex flex-col max-w-28 gap-1">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-3 w-16" />
                         </div>
                       </div>
-                    ))
-                  : Array.from({ length: 3 }).map((_, index) => (
-                      <div key={index} className="h-16 rounded-md px-5 mt-1">
-                        <div className="flex gap-4 items-center">
-                          <Skeleton className="h-11 w-11 rounded-3xl" />
-                          <div className="flex flex-col max-w-28 gap-1">
-                            <Skeleton className="h-4 w-28" />
-                            <Skeleton className="h-3 w-16" />
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                : contacts.length !== 0 &&
-                  contacts
-                    .filter((c) => c.subscription && c.subscription !== "none")
-                    .map((contact, index) =>
-                      isCollapsed ? (
-                        <TooltipProvider key={index}>
-                          <Tooltip key={index} delayDuration={0}>
-                            <TooltipTrigger asChild>
-                              <a
-                                className={cn(
-                                  buttonVariants({
-                                    variant: "ghost",
-                                    size: "icon",
-                                  }),
-                                  "h-11 w-11 md:h-16 md:w-16 relative",
-                                  " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer ",
-                                  selectedType === "contact" &&
-                                    selectedContact!.jid === contact.jid
-                                    ? "bg-muted dark:bg-muted/50"
-                                    : ""
-                                )}
-                                onClick={() => {
-                                  setSelectedType("contact");
-                                  setSelectedContact(contact);
-                                  markConversationAsRead(contact.jid);
-                                }}
-                              >
-                                <Avatar className="flex justify-center items-center  rounded-none ">
-                                  {contact.pfp ? (
-                                    <img
-                                      src={contact.pfp}
-                                      alt={contact.name}
-                                      className="rounded-3xl"
-                                    />
-                                  ) : (
-                                    <AvatarFallback className="rounded-3xl">
-                                      {contact.name &&
-                                        contact.name
-                                          .split(" ")[0][0]
-                                          .toLocaleUpperCase()}
-                                    </AvatarFallback>
-                                  )}
-                                  <StatusBadge
-                                    className="absolute bottom-0 right-0"
-                                    status={contact.show}
-                                  />
-                                </Avatar>
-                                <span className="sr-only">{contact.name}</span>
-                              </a>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="right"
-                              className="flex items-center gap-4"
+                    </div>
+                  ))
+                )
+              ) : contacts.filter(
+                  (c) => c.subscription && c.subscription !== "none"
+                ).length !== 0 ? (
+                contacts
+                  .filter((c) => c.subscription && c.subscription !== "none")
+                  .map((contact, index) =>
+                    isCollapsed ? (
+                      <TooltipProvider key={index}>
+                        <Tooltip key={index} delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <a
+                              className={cn(
+                                buttonVariants({
+                                  variant: "ghost",
+                                  size: "icon",
+                                }),
+                                "h-11 w-11 md:h-16 md:w-16 relative",
+                                " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer ",
+                                selectedType === "contact" &&
+                                  selectedContact!.jid === contact.jid
+                                  ? "bg-muted dark:bg-muted/50"
+                                  : ""
+                              )}
+                              onClick={() => {
+                                setSelectedType("contact");
+                                setSelectedContact(contact);
+                                markConversationAsRead(contact.jid);
+                              }}
                             >
-                              {contact.name}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        <a
-                          key={index}
-                          className={cn(
-                            buttonVariants({ variant: "ghost", size: "xl" }),
-                            " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
-                            "justify-start gap-4 cursor-pointer w-full",
-                            selectedType === "contact" &&
-                              selectedContact!.jid === contact.jid
-                              ? "bg-muted dark:bg-muted/50"
-                              : ""
-                          )}
-                          onClick={() => {
-                            setSelectedType("contact");
-                            setSelectedContact(contact);
-                            markConversationAsRead(contact.jid);
-                          }}
-                        >
-                          <Avatar className="flex justify-center items-center relative rounded-none">
-                            <AvatarFallback>
-                              {contact.pfp ? (
-                                <img
-                                  src={contact.pfp}
-                                  alt={contact.name}
-                                  className="rounded-3xl"
+                              <Avatar className="flex justify-center items-center  rounded-none ">
+                                {contact.pfp ? (
+                                  <img
+                                    src={contact.pfp}
+                                    alt={contact.name}
+                                    className="rounded-3xl"
+                                  />
+                                ) : (
+                                  <AvatarFallback className="rounded-3xl">
+                                    {contact.name &&
+                                      contact.name
+                                        .split(" ")[0][0]
+                                        .toLocaleUpperCase()}
+                                  </AvatarFallback>
+                                )}
+                                <StatusBadge
+                                  className="absolute bottom-0 right-0"
+                                  status={contact.show}
                                 />
-                              ) : (
-                                <AvatarFallback>
-                                  {contact.name &&
-                                    contact.name
-                                      .split(" ")[0][0]
-                                      .toLocaleUpperCase()}
-                                </AvatarFallback>
-                              )}
-                            </AvatarFallback>
-                            <StatusBadge
-                              className="absolute bottom-0 right-0"
-                              status={contact.show}
-                            />
-                          </Avatar>
-                          <div className="flex flex-col max-w-28">
-                            <span>{contact.name}</span>
-                            <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                              {unreadMessages[contact.jid] &&
-                              unreadMessages[contact.jid] > 0 ? (
-                                <span className="text-red-400">
-                                  {unreadMessages[contact.jid]} new messages!
-                                </span>
-                              ) : (
-                                <span className="text-zinc-400 truncate">
-                                  {
-                                    // get the last message from
-                                    messages[contact.jid]?.[
-                                      messages[contact.jid]?.length - 1
-                                    ]?.body
-                                  }
-                                </span>
-                              )}
-                            </div>
+                              </Avatar>
+                              <span className="sr-only">{contact.name}</span>
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            className="flex items-center gap-4"
+                          >
+                            {contact.name}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <a
+                        key={index}
+                        className={cn(
+                          buttonVariants({ variant: "ghost", size: "xl" }),
+                          " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
+                          "justify-start gap-4 cursor-pointer w-full",
+                          selectedType === "contact" &&
+                            selectedContact!.jid === contact.jid
+                            ? "bg-muted dark:bg-muted/50"
+                            : ""
+                        )}
+                        onClick={() => {
+                          setSelectedType("contact");
+                          setSelectedContact(contact);
+                          markConversationAsRead(contact.jid);
+                        }}
+                      >
+                        <Avatar className="flex justify-center items-center relative rounded-none">
+                          <AvatarFallback>
+                            {contact.pfp ? (
+                              <img
+                                src={contact.pfp}
+                                alt={contact.name}
+                                className="rounded-3xl"
+                              />
+                            ) : (
+                              <AvatarFallback>
+                                {contact.name &&
+                                  contact.name
+                                    .split(" ")[0][0]
+                                    .toLocaleUpperCase()}
+                              </AvatarFallback>
+                            )}
+                          </AvatarFallback>
+                          <StatusBadge
+                            className="absolute bottom-0 right-0"
+                            status={contact.show}
+                          />
+                        </Avatar>
+                        <div className="flex flex-col max-w-28">
+                          <span>{contact.name}</span>
+                          <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
+                            {unreadMessages[contact.jid] &&
+                            unreadMessages[contact.jid] > 0 ? (
+                              <span className="text-red-400">
+                                {unreadMessages[contact.jid]} new messages!
+                              </span>
+                            ) : (
+                              <span className="text-zinc-400 truncate">
+                                {
+                                  // get the last message from
+                                  messages[contact.jid]?.[
+                                    messages[contact.jid]?.length - 1
+                                  ]?.body
+                                }
+                              </span>
+                            )}
                           </div>
-                        </a>
-                      )
-                    )}
+                        </div>
+                      </a>
+                    )
+                  )
+              ) : isCollapsed ? (
+                <div className="flex flex-col gap-2  p-1 text-zinc-500">
+                  <Cat size={30} className="self-center" />
+                  <p className="text-zinc-500 text-center text-xs">Empty</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2  p-4 text-zinc-500">
+                  <Cat size={40} className="self-center" />
+                  <p className="text-zinc-500 text-center">
+                    No subscribed contacts
+                  </p>
+                </div>
+              )}
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-4">
@@ -330,6 +352,9 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                 <h1 className=" text-lg opacity-85">
                   Unsubscribed{" "}
                   {!gettingContacts &&
+                    contacts.filter(
+                      (c) => !c.subscription || c.subscription === "none"
+                    ).length > 0 &&
                     `(${
                       contacts.filter(
                         (c) => !c.subscription || c.subscription === "none"
@@ -352,149 +377,166 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
               )}
             </AccordionTrigger>
             <AccordionContent className="gap-2 grid">
-              {gettingContacts
-                ? isCollapsed
-                  ? Array.from({ length: 3 }).map((_, index) => (
-                      <div key={index} className="h-11 w-11 md:h-16 md:w-16">
-                        <div className="w-full h-full p-3 flex items-center justify-center">
-                          <Skeleton className="rounded-3xl h-9 w-9" />
+              {gettingContacts ? (
+                isCollapsed ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-11 w-11 md:h-16 md:w-16">
+                      <div className="w-full h-full p-3 flex items-center justify-center">
+                        <Skeleton className="rounded-3xl h-9 w-9" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-16 rounded-md px-5 mt-1">
+                      <div className="flex gap-4 items-center">
+                        <Skeleton className="h-11 w-11 rounded-3xl" />
+                        <div className="flex flex-col max-w-28 gap-1">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-3 w-16" />
                         </div>
                       </div>
-                    ))
-                  : Array.from({ length: 3 }).map((_, index) => (
-                      <div key={index} className="h-16 rounded-md px-5 mt-1">
-                        <div className="flex gap-4 items-center">
-                          <Skeleton className="h-11 w-11 rounded-3xl" />
-                          <div className="flex flex-col max-w-28 gap-1">
-                            <Skeleton className="h-4 w-28" />
-                            <Skeleton className="h-3 w-16" />
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                : contacts.length !== 0 &&
-                  contacts
-                    .filter((c) => !c.subscription || c.subscription === "none")
-                    .map((contact, index) =>
-                      isCollapsed ? (
-                        <TooltipProvider key={index}>
-                          <Tooltip key={index} delayDuration={0}>
-                            <TooltipTrigger asChild>
-                              <a
-                                className={cn(
-                                  buttonVariants({
-                                    variant: "ghost",
-                                    size: "icon",
-                                  }),
-                                  "h-11 w-11 md:h-16 md:w-16 relative",
-                                  " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer",
-                                  selectedType === "contact" &&
-                                    selectedContact!.jid === contact.jid
-                                    ? "bg-muted dark:bg-muted/50"
-                                    : ""
-                                )}
-                                onClick={() => {
-                                  setSelectedType("contact");
-                                  setSelectedContact(contact);
-                                  markConversationAsRead(contact.jid);
-                                }}
-                              >
-                                <Avatar className="flex justify-center items-center relative rounded-none">
-                                  <AvatarFallback>
-                                    {contact.pfp ? (
-                                      <img
-                                        src={contact.pfp}
-                                        alt={contact.name}
-                                        className="rounded-3xl"
-                                      />
-                                    ) : (
-                                      <AvatarFallback>
-                                        {contact.name &&
-                                          contact.name
-                                            .split(" ")[0][0]
-                                            .toLocaleUpperCase()}
-                                      </AvatarFallback>
-                                    )}
-                                  </AvatarFallback>
-                                  <StatusBadge
-                                    className="absolute bottom-0 right-0"
-                                    status={contact.show}
-                                  />
-                                </Avatar>
-                                <span className="sr-only">{contact.name}</span>
-                              </a>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="right"
-                              className="flex items-center gap-4"
+                    </div>
+                  ))
+                )
+              ) : contacts.filter(
+                  (c) => !c.subscription || c.subscription === "none"
+                ).length !== 0 ? (
+                contacts
+                  .filter((c) => !c.subscription || c.subscription === "none")
+                  .map((contact, index) =>
+                    isCollapsed ? (
+                      <TooltipProvider key={index}>
+                        <Tooltip key={index} delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <a
+                              className={cn(
+                                buttonVariants({
+                                  variant: "ghost",
+                                  size: "icon",
+                                }),
+                                "h-11 w-11 md:h-16 md:w-16 relative",
+                                " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer",
+                                selectedType === "contact" &&
+                                  selectedContact!.jid === contact.jid
+                                  ? "bg-muted dark:bg-muted/50"
+                                  : ""
+                              )}
+                              onClick={() => {
+                                setSelectedType("contact");
+                                setSelectedContact(contact);
+                                markConversationAsRead(contact.jid);
+                              }}
                             >
-                              {contact.name}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        <a
-                          key={index}
-                          className={cn(
-                            buttonVariants({ variant: "ghost", size: "xl" }),
-                            " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
-                            "justify-start gap-4 cursor-pointer w-full",
-                            selectedType === "contact" &&
-                              selectedContact!.jid === contact.jid
-                              ? "bg-muted dark:bg-muted/50"
-                              : ""
-                          )}
-                          onClick={() => {
-                            setSelectedType("contact");
-                            setSelectedContact(contact);
-                            markConversationAsRead(contact.jid);
-                          }}
-                        >
-                          <Avatar className="flex justify-center items-center relative rounded-none">
-                            <AvatarFallback>
-                              {contact.pfp ? (
-                                <img
-                                  src={contact.pfp}
-                                  alt={contact.name}
-                                  className="rounded-3xl"
-                                />
-                              ) : (
+                              <Avatar className="flex justify-center items-center relative rounded-none">
                                 <AvatarFallback>
-                                  {contact.name &&
-                                    contact.name
-                                      .split(" ")[0][0]
-                                      .toLocaleUpperCase()}
+                                  {contact.pfp ? (
+                                    <img
+                                      src={contact.pfp}
+                                      alt={contact.name}
+                                      className="rounded-3xl"
+                                    />
+                                  ) : (
+                                    <AvatarFallback>
+                                      {contact.name &&
+                                        contact.name
+                                          .split(" ")[0][0]
+                                          .toLocaleUpperCase()}
+                                    </AvatarFallback>
+                                  )}
                                 </AvatarFallback>
-                              )}
-                            </AvatarFallback>
-                            <StatusBadge
-                              className="absolute bottom-0 right-0"
-                              status={contact.show}
-                            />
-                          </Avatar>
-                          <div className="flex flex-col max-w-28">
-                            <span>{contact.name}</span>
-                            <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                              {unreadMessages[contact.jid] &&
-                              unreadMessages[contact.jid] > 0 ? (
-                                <span className="text-red-400">
-                                  {unreadMessages[contact.jid]} new messages!
-                                </span>
-                              ) : (
-                                <span className="text-zinc-400 truncate">
-                                  {
-                                    // get the last message from
-                                    messages[contact.jid]?.[
-                                      messages[contact.jid]?.length - 1
-                                    ]?.body
-                                  }
-                                </span>
-                              )}
-                            </div>
+                                <StatusBadge
+                                  className="absolute bottom-0 right-0"
+                                  status={contact.show}
+                                />
+                              </Avatar>
+                              <span className="sr-only">{contact.name}</span>
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            className="flex items-center gap-4"
+                          >
+                            {contact.name}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <a
+                        key={index}
+                        className={cn(
+                          buttonVariants({ variant: "ghost", size: "xl" }),
+                          " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
+                          "justify-start gap-4 cursor-pointer w-full",
+                          selectedType === "contact" &&
+                            selectedContact!.jid === contact.jid
+                            ? "bg-muted dark:bg-muted/50"
+                            : ""
+                        )}
+                        onClick={() => {
+                          setSelectedType("contact");
+                          setSelectedContact(contact);
+                          markConversationAsRead(contact.jid);
+                        }}
+                      >
+                        <Avatar className="flex justify-center items-center relative rounded-none">
+                          <AvatarFallback>
+                            {contact.pfp ? (
+                              <img
+                                src={contact.pfp}
+                                alt={contact.name}
+                                className="rounded-3xl"
+                              />
+                            ) : (
+                              <AvatarFallback>
+                                {contact.name &&
+                                  contact.name
+                                    .split(" ")[0][0]
+                                    .toLocaleUpperCase()}
+                              </AvatarFallback>
+                            )}
+                          </AvatarFallback>
+                          <StatusBadge
+                            className="absolute bottom-0 right-0"
+                            status={contact.show}
+                          />
+                        </Avatar>
+                        <div className="flex flex-col max-w-28">
+                          <span>{contact.name}</span>
+                          <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
+                            {unreadMessages[contact.jid] &&
+                            unreadMessages[contact.jid] > 0 ? (
+                              <span className="text-red-400">
+                                {unreadMessages[contact.jid]} new messages!
+                              </span>
+                            ) : (
+                              <span className="text-zinc-400 truncate">
+                                {
+                                  // get the last message from
+                                  messages[contact.jid]?.[
+                                    messages[contact.jid]?.length - 1
+                                  ]?.body
+                                }
+                              </span>
+                            )}
                           </div>
-                        </a>
-                      )
-                    )}
+                        </div>
+                      </a>
+                    )
+                  )
+              ) : isCollapsed ? (
+                <div className="flex flex-col gap-2  p-1 text-zinc-500">
+                  <Cat size={30} className="self-center" />
+                  <p className="text-zinc-500 text-center text-xs">Empty</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2  p-4 text-zinc-500">
+                  <Cat size={40} className="self-center" />
+                  <p className="text-zinc-500 text-center">
+                    No unsubscribed contacts
+                  </p>
+                </div>
+              )}
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-2">
@@ -504,6 +546,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                 <h1 className=" text-lg opacity-85">
                   Joined Groups{" "}
                   {!gettingGroups &&
+                    groups.filter((group) => group.isJoined).length > 0 &&
                     `(${groups.filter((group) => group.isJoined).length})`}
                 </h1>
               ) : (
@@ -522,134 +565,147 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
               )}
             </AccordionTrigger>
             <AccordionContent className="gap-2 grid">
-              {gettingGroups
-                ? isCollapsed
-                  ? Array.from({ length: 3 }).map((_, index) => (
-                      <div key={index} className="h-11 w-11 md:h-16 md:w-16">
-                        <div className="w-full h-full p-3 flex items-center justify-center">
-                          <Skeleton className="rounded-3xl h-9 w-9" />
+              {gettingGroups ? (
+                isCollapsed ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-11 w-11 md:h-16 md:w-16">
+                      <div className="w-full h-full p-3 flex items-center justify-center">
+                        <Skeleton className="rounded-3xl h-9 w-9" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-16 rounded-md px-5 mt-1">
+                      <div className="flex gap-4 items-center">
+                        <Skeleton className="h-11 w-11 rounded-3xl" />
+                        <div className="flex flex-col max-w-28 gap-1">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-3 w-16" />
                         </div>
                       </div>
-                    ))
-                  : Array.from({ length: 3 }).map((_, index) => (
-                      <div key={index} className="h-16 rounded-md px-5 mt-1">
-                        <div className="flex gap-4 items-center">
-                          <Skeleton className="h-11 w-11 rounded-3xl" />
-                          <div className="flex flex-col max-w-28 gap-1">
-                            <Skeleton className="h-4 w-28" />
-                            <Skeleton className="h-3 w-16" />
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                : groups.length !== 0 &&
-                  groups
-                    .filter((group) => group.isJoined)
-                    .map((contact, index) =>
-                      isCollapsed ? (
-                        <TooltipProvider key={index}>
-                          <Tooltip key={index} delayDuration={0}>
-                            <TooltipTrigger asChild>
-                              <a
-                                className={cn(
-                                  buttonVariants({
-                                    variant: "ghost",
-                                    size: "icon",
-                                  }),
-                                  "h-11 w-11 md:h-16 md:w-16",
-                                  " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer",
-                                  selectedType === "group" &&
-                                    selectedGroup!.jid === contact.jid
-                                    ? "bg-muted dark:bg-muted/50"
-                                    : ""
-                                )}
-                                onClick={() => {
-                                  setSelectedType("group");
-                                  setSelectedGroup(contact);
-                                  markConversationAsRead(contact.jid);
-                                }}
-                              >
-                                <Avatar className="flex justify-center items-center rounded-none">
-                                  <AvatarFallback className="rounded-3xl">
-                                    {contact.name &&
-                                      contact.name
-                                        .split(" ")[0][0]
-                                        .toLocaleUpperCase()}
-                                  </AvatarFallback>
-                                  <StatusBadge
-                                    className="absolute bottom-0 right-0 !rounded-none h-4 w-4"
-                                    status={
-                                      contact.isPublic ? "public" : "private"
-                                    }
-                                  />
-                                </Avatar>{" "}
-                                <span className="sr-only">{contact.name}</span>
-                              </a>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="right"
-                              className="flex items-center gap-4"
-                            >
-                              {contact.name}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        <a
-                          key={index}
-                          className={cn(
-                            buttonVariants({ variant: "ghost", size: "xl" }),
-                            " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
-                            "justify-start gap-4 cursor-pointer  w-full",
-                            selectedType === "group" &&
-                              selectedGroup!.jid === contact.jid
-                              ? "bg-muted dark:bg-muted/50"
-                              : ""
-                          )}
-                          onClick={() => {
-                            setSelectedGroup(contact);
-                            setSelectedType("group");
-                            markConversationAsRead(contact.jid);
-                          }}
-                        >
-                          <Avatar className="flex justify-center items-center rounded-none">
-                            <AvatarFallback>
-                              <AvatarFallback className="rounded-3xl">
-                                {contact.name &&
-                                  contact.name
-                                    .split(" ")[0][0]
-                                    .toLocaleUpperCase()}
-                              </AvatarFallback>
-                            </AvatarFallback>
-
-                            <StatusBadge
-                              className="absolute bottom-0 right-0 !rounded-none "
-                              status={contact.isPublic ? "public" : "private"}
-                            />
-                          </Avatar>
-                          <div className="flex flex-col max-w-28">
-                            <span>{contact.name}</span>
-                            <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                              {unreadMessages[contact.jid] &&
-                              unreadMessages[contact.jid] > 0 ? (
-                                <span className="text-red-400">
-                                  {unreadMessages[contact.jid]} new messages!
-                                </span>
-                              ) : (
-                                <span className="text-zinc-400 truncate">
-                                  {
-                                    // get the last message from
-                                    messages[contact.jid]?.[
-                                      messages[contact.jid]?.length - 1
-                                    ]?.body
-                                  }
-                                </span>
+                    </div>
+                  ))
+                )
+              ) : groups.filter((group) => group.isJoined).length !== 0 ? (
+                groups
+                  .filter((group) => group.isJoined)
+                  .map((contact, index) =>
+                    isCollapsed ? (
+                      <TooltipProvider key={index}>
+                        <Tooltip key={index} delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <a
+                              className={cn(
+                                buttonVariants({
+                                  variant: "ghost",
+                                  size: "icon",
+                                }),
+                                "h-11 w-11 md:h-16 md:w-16",
+                                " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer",
+                                selectedType === "group" &&
+                                  selectedGroup!.jid === contact.jid
+                                  ? "bg-muted dark:bg-muted/50"
+                                  : ""
                               )}
-                            </div>
+                              onClick={() => {
+                                setSelectedType("group");
+                                setSelectedGroup(contact);
+                                markConversationAsRead(contact.jid);
+                              }}
+                            >
+                              <Avatar className="flex justify-center items-center rounded-none">
+                                <AvatarFallback className="rounded-3xl">
+                                  {contact.name &&
+                                    contact.name
+                                      .split(" ")[0][0]
+                                      .toLocaleUpperCase()}
+                                </AvatarFallback>
+                                <StatusBadge
+                                  className="absolute bottom-0 right-0 !rounded-none h-4 w-4"
+                                  status={
+                                    contact.isPublic ? "public" : "private"
+                                  }
+                                />
+                              </Avatar>{" "}
+                              <span className="sr-only">{contact.name}</span>
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            className="flex items-center gap-4"
+                          >
+                            {contact.name}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <a
+                        key={index}
+                        className={cn(
+                          buttonVariants({ variant: "ghost", size: "xl" }),
+                          " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
+                          "justify-start gap-4 cursor-pointer  w-full",
+                          selectedType === "group" &&
+                            selectedGroup!.jid === contact.jid
+                            ? "bg-muted dark:bg-muted/50"
+                            : ""
+                        )}
+                        onClick={() => {
+                          setSelectedGroup(contact);
+                          setSelectedType("group");
+                          markConversationAsRead(contact.jid);
+                        }}
+                      >
+                        <Avatar className="flex justify-center items-center rounded-none">
+                          <AvatarFallback>
+                            <AvatarFallback className="rounded-3xl">
+                              {contact.name &&
+                                contact.name
+                                  .split(" ")[0][0]
+                                  .toLocaleUpperCase()}
+                            </AvatarFallback>
+                          </AvatarFallback>
+
+                          <StatusBadge
+                            className="absolute bottom-0 right-0 !rounded-none "
+                            status={contact.isPublic ? "public" : "private"}
+                          />
+                        </Avatar>
+                        <div className="flex flex-col max-w-28">
+                          <span>{contact.name}</span>
+                          <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
+                            {unreadMessages[contact.jid] &&
+                            unreadMessages[contact.jid] > 0 ? (
+                              <span className="text-red-400">
+                                {unreadMessages[contact.jid]} new messages!
+                              </span>
+                            ) : (
+                              <span className="text-zinc-400 truncate">
+                                {
+                                  // get the last message from
+                                  messages[contact.jid]?.[
+                                    messages[contact.jid]?.length - 1
+                                  ]?.body
+                                }
+                              </span>
+                            )}
                           </div>
-                        </a>
-                      )
-                    )}
+                        </div>
+                      </a>
+                    )
+                  )
+              ) : isCollapsed ? (
+                <div className="flex flex-col gap-2  p-1 text-zinc-500">
+                  <HeartCrack size={30} className="self-center" />
+                  <p className="text-zinc-500 text-center text-xs">Empty</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2  p-4 text-zinc-500">
+                  <HeartCrack size={40} className="self-center" />
+                  <p className="text-zinc-500 text-center">No joined groups</p>
+                </div>
+              )}
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-3">
@@ -659,6 +715,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                 <h1 className=" text-lg opacity-85">
                   Public Groups{" "}
                   {!gettingGroups &&
+                    groups.filter((group) => group.isPublic).length > 0 &&
                     `(${groups.filter((group) => group.isPublic).length})`}
                 </h1>
               ) : (
@@ -677,123 +734,136 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
               )}
             </AccordionTrigger>
             <AccordionContent className="gap-2 grid">
-              {gettingGroups
-                ? isCollapsed
-                  ? Array.from({ length: 3 }).map((_, index) => (
-                      <div key={index} className="h-11 w-11 md:h-16 md:w-16">
-                        <div className="w-full h-full p-3 flex items-center justify-center">
-                          <Skeleton className="rounded-3xl h-9 w-9" />
+              {gettingGroups ? (
+                isCollapsed ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-11 w-11 md:h-16 md:w-16">
+                      <div className="w-full h-full p-3 flex items-center justify-center">
+                        <Skeleton className="rounded-3xl h-9 w-9" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-16 rounded-md px-5 mt-1">
+                      <div className="flex gap-4 items-center">
+                        <Skeleton className="h-11 w-11 rounded-3xl" />
+                        <div className="flex flex-col max-w-28 gap-1">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-3 w-16" />
                         </div>
                       </div>
-                    ))
-                  : Array.from({ length: 3 }).map((_, index) => (
-                      <div key={index} className="h-16 rounded-md px-5 mt-1">
-                        <div className="flex gap-4 items-center">
-                          <Skeleton className="h-11 w-11 rounded-3xl" />
-                          <div className="flex flex-col max-w-28 gap-1">
-                            <Skeleton className="h-4 w-28" />
-                            <Skeleton className="h-3 w-16" />
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                : groups.length !== 0 &&
-                  groups
-                    .filter((group) => group.isPublic)
-                    .map((contact, index) =>
-                      isCollapsed ? (
-                        <TooltipProvider key={index}>
-                          <Tooltip key={index} delayDuration={0}>
-                            <TooltipTrigger asChild>
-                              <a
-                                className={cn(
-                                  buttonVariants({
-                                    variant: "ghost",
-                                    size: "icon",
-                                  }),
-                                  "h-11 w-11 md:h-16 md:w-16",
-                                  " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer",
-                                  selectedType === "group" &&
-                                    selectedGroup!.jid === contact.jid
-                                    ? "bg-muted dark:bg-muted/50"
-                                    : ""
-                                )}
-                                onClick={() => {
-                                  setSelectedType("group");
-                                  setSelectedGroup(contact);
-                                  markConversationAsRead(contact.jid);
-                                }}
-                              >
-                                <Avatar className="flex justify-center items-center  rounded-3xl border">
-                                  <AvatarFallback>
-                                    {contact.name &&
-                                      contact.name
-                                        .split(" ")[0][0]
-                                        .toLocaleUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>{" "}
-                                <span className="sr-only">{contact.name}</span>
-                              </a>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="right"
-                              className="flex items-center gap-4"
-                            >
-                              {contact.name}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        <a
-                          key={index}
-                          className={cn(
-                            buttonVariants({ variant: "ghost", size: "xl" }),
-                            " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
-                            "justify-start gap-4 cursor-pointer  w-full",
-                            selectedType === "group" &&
-                              selectedGroup!.jid === contact.jid
-                              ? "bg-muted dark:bg-muted/50"
-                              : ""
-                          )}
-                          onClick={() => {
-                            setSelectedGroup(contact);
-                            setSelectedType("group");
-                            markConversationAsRead(contact.jid);
-                          }}
-                        >
-                          <Avatar className="flex justify-center items-center rounded-3xl border">
-                            <AvatarFallback>
-                              <AvatarFallback>
-                                {contact.name &&
-                                  contact.name
-                                    .split(" ")[0][0]
-                                    .toLocaleUpperCase()}
-                              </AvatarFallback>
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col max-w-28">
-                            <span>{contact.name}</span>
-                            <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                              {unreadMessages[contact.jid] &&
-                              unreadMessages[contact.jid] > 0 ? (
-                                <span className="text-red-400">
-                                  {unreadMessages[contact.jid]} new messages!
-                                </span>
-                              ) : (
-                                <span className="text-zinc-400 truncate">
-                                  {
-                                    // get the last message from
-                                    messages[contact.jid]?.[
-                                      messages[contact.jid]?.length - 1
-                                    ]?.body
-                                  }
-                                </span>
+                    </div>
+                  ))
+                )
+              ) : groups.filter((group) => group.isPublic).length !== 0 ? (
+                groups
+                  .filter((group) => group.isPublic)
+                  .map((contact, index) =>
+                    isCollapsed ? (
+                      <TooltipProvider key={index}>
+                        <Tooltip key={index} delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <a
+                              className={cn(
+                                buttonVariants({
+                                  variant: "ghost",
+                                  size: "icon",
+                                }),
+                                "h-11 w-11 md:h-16 md:w-16",
+                                " dark:text-muted-foreground dark:hover:bg-muted/60 dark:hover:text-white cursor-pointer",
+                                selectedType === "group" &&
+                                  selectedGroup!.jid === contact.jid
+                                  ? "bg-muted dark:bg-muted/50"
+                                  : ""
                               )}
-                            </div>
+                              onClick={() => {
+                                setSelectedType("group");
+                                setSelectedGroup(contact);
+                                markConversationAsRead(contact.jid);
+                              }}
+                            >
+                              <Avatar className="flex justify-center items-center  rounded-3xl border">
+                                <AvatarFallback>
+                                  {contact.name &&
+                                    contact.name
+                                      .split(" ")[0][0]
+                                      .toLocaleUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>{" "}
+                              <span className="sr-only">{contact.name}</span>
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            className="flex items-center gap-4"
+                          >
+                            {contact.name}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <a
+                        key={index}
+                        className={cn(
+                          buttonVariants({ variant: "ghost", size: "xl" }),
+                          " dark:text-white dark:hover:bg-muted/60 dark:hover:text-white shrink",
+                          "justify-start gap-4 cursor-pointer  w-full",
+                          selectedType === "group" &&
+                            selectedGroup!.jid === contact.jid
+                            ? "bg-muted dark:bg-muted/50"
+                            : ""
+                        )}
+                        onClick={() => {
+                          setSelectedGroup(contact);
+                          setSelectedType("group");
+                          markConversationAsRead(contact.jid);
+                        }}
+                      >
+                        <Avatar className="flex justify-center items-center rounded-3xl border">
+                          <AvatarFallback>
+                            <AvatarFallback>
+                              {contact.name &&
+                                contact.name
+                                  .split(" ")[0][0]
+                                  .toLocaleUpperCase()}
+                            </AvatarFallback>
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col max-w-28">
+                          <span>{contact.name}</span>
+                          <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
+                            {unreadMessages[contact.jid] &&
+                            unreadMessages[contact.jid] > 0 ? (
+                              <span className="text-red-400">
+                                {unreadMessages[contact.jid]} new messages!
+                              </span>
+                            ) : (
+                              <span className="text-zinc-400 truncate">
+                                {
+                                  // get the last message from
+                                  messages[contact.jid]?.[
+                                    messages[contact.jid]?.length - 1
+                                  ]?.body
+                                }
+                              </span>
+                            )}
                           </div>
-                        </a>
-                      )
-                    )}
+                        </div>
+                      </a>
+                    )
+                  )
+              ) : isCollapsed ? (
+                <div className="flex flex-col gap-2  p-1 text-zinc-500">
+                  <HeartCrack size={30} className="self-center" />
+                  <p className="text-zinc-500 text-center text-xs">Empty</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2  p-4 text-zinc-500">
+                  <HeartCrack size={40} className="self-center" />
+                  <p className="text-zinc-500 text-center">No public groups</p>
+                </div>
+              )}
             </AccordionContent>
           </AccordionItem>
         </Accordion>

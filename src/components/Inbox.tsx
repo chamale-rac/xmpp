@@ -4,7 +4,7 @@ import { Button, buttonVariants } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Tooltip } from "@radix-ui/react-tooltip";
-import { Cctv, Check, Trash, UserRound, UsersRound } from "lucide-react";
+import { ArchiveX, Check, Trash, UserRound, UsersRound } from "lucide-react";
 
 const Inbox = () => {
   const {
@@ -18,9 +18,9 @@ const Inbox = () => {
 
   if (subscriptionRequests.length === 0 && groupInvitations.length === 0) {
     return (
-      <div className="flex flex-col gap-1 items-center text-center text-sm min-h-32 justify-center">
-        <Cctv className="w-7 h-7 text-zinc-300" />
-        <div className="text-zinc-400">No new requests...</div>
+      <div className="flex flex-col gap-2 items-center text-center text-sm min-h-32 justify-center bg-muted/40 rounded-md">
+        <ArchiveX size={40} className="self-center text-zinc-500" />
+        <div className="text-zinc-400 text-center">No new requests...</div>
       </div>
     );
   }
