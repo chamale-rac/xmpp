@@ -59,6 +59,10 @@ interface Bookmark {
   reason?: string;
 }
 
+interface UnreadMessages {
+  [jid: string]: number;
+}
+
 // Define the shape of your context
 interface XmppContextProps {
   registerXmppUser: (username: string, password: string) => Promise<boolean>;
@@ -122,6 +126,8 @@ interface XmppContextProps {
   removeBookmark: (id: string) => void;
   setIsConnected: (connected: boolean) => void;
   closeSession: () => void;
+  unreadMessages: UnreadMessages;
+  markConversationAsRead: (jid: string) => void;
 }
 
 // Create the context
@@ -175,6 +181,8 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     removeBookmark,
     setIsConnected,
     closeSession,
+    unreadMessages,
+    markConversationAsRead,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -224,6 +232,8 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         removeBookmark,
         setIsConnected,
         closeSession,
+        unreadMessages,
+        markConversationAsRead,
       }}
     >
       {children}

@@ -4,6 +4,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { client, xml } from "@xmpp/client";
 import debug from "@xmpp/debug";
 import { v4 as uuidv4 } from "uuid";
+import { toast } from "sonner";
+import notificationSound from "/notification.mp3";
+
+interface UnreadMessages {
+  [jid: string]: number;
+}
 
 interface XmppConnectionOptions {
   service: string;
@@ -70,6 +76,7 @@ interface Bookmark {
 }
 
 export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
+  // audio state
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>();
   const [selectedGroup, setSelectedGroup] = useState<Group | undefined>();
   const [selectedType, setSelectedType] = useState<
@@ -101,6 +108,15 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
   // Add these to your existing useXmppClient hook
   const [groups, setGroups] = useState<Group[]>([]);
+  const audioRef = new Audio(notificationSound);
+
+  const [unreadMessages, setUnreadMessages] = useState<UnreadMessages>({});
+
+  const statusRef = useRef<"away" | "chat" | "dnd" | "xa">("chat");
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   const getBookmarks = useCallback(() => {
     if (xmppRef.current) {
@@ -278,6 +294,26 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
         if (messageExists) {
           return prevMessages;
+        }
+
+        // show only if the message is received from another user
+        if (sender !== usernameRef.current) {
+          // Just if the message is less than 1 minutes
+          if (new Date().getTime() - timestamp.getTime() < 60000) {
+            if (statusRef.current === "chat") {
+              toast(`${from}`, {
+                description: `${
+                  body.length > 50 ? body.substring(0, 50) + "..." : body
+                }`,
+              });
+              audioRef.play();
+            }
+            // Increment unread messages count for the group
+            setUnreadMessages((prevUnread) => ({
+              ...prevUnread,
+              [groupJid]: (prevUnread[groupJid] || 0) + 1,
+            }));
+          }
         }
 
         return {
@@ -732,7 +768,13 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       if (type === "subscribe") {
         console.log("Subscription request from:", from);
 
-        setSubscriptionRequests((prev) => [...prev, { from, message: status }]);
+        setSubscriptionRequests((prev) => {
+          const requestExists = prev.some((request) => request.from === from);
+          if (requestExists) {
+            return prev;
+          }
+          return [...prev, { from, message: status }];
+        });
       } else {
         setContacts((prevContacts) => {
           const contactExists = prevContacts.some(
@@ -924,6 +966,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
           (contact) => contact.jid === from
         );
         if (!contactExists) {
+          addConversation(from);
+
           return [...prevContacts, { jid: from, name: from.split("@")[0] }];
         } else {
           return prevContacts;
@@ -941,6 +985,23 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         // If the message exists, return the previous state
         if (messageExists) {
           return prevMessages;
+        }
+
+        if (statusRef.current === "chat") {
+          toast(`${from}`, {
+            description: `${
+              body.length > 50 ? body.substring(0, 50) + "..." : body
+            }`,
+          });
+          audioRef.play();
+        }
+
+        // Increment unread messages count for the contact
+        if (from !== usernameRef.current + "@" + xmppOptions.domain) {
+          setUnreadMessages((prevUnread) => ({
+            ...prevUnread,
+            [contactJid]: (prevUnread[contactJid] || 0) + 1,
+          }));
         }
 
         // Otherwise, add the new message
@@ -1616,6 +1677,14 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     autojoinAlreadyHandled,
   ]);
 
+  const markConversationAsRead = useCallback((jid: string) => {
+    setUnreadMessages((prevUnread) => {
+      const newUnread = { ...prevUnread };
+      delete newUnread[jid];
+      return newUnread;
+    });
+  }, []);
+
   const closeSession = useCallback(() => {
     if (xmppRef.current) {
       // Disconnect from the XMPP server
@@ -1696,5 +1765,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     removeBookmark,
     setIsConnected,
     closeSession,
+    unreadMessages,
+    markConversationAsRead,
   };
 };

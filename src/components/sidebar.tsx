@@ -54,6 +54,9 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
     selectedContact,
     selectedGroup,
     selectedType,
+    unreadMessages,
+    markConversationAsRead,
+    messages,
   } = useXmpp();
 
   return (
@@ -200,6 +203,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                 onClick={() => {
                                   setSelectedType("contact");
                                   setSelectedContact(contact);
+                                  markConversationAsRead(contact.jid);
                                 }}
                               >
                                 <Avatar className="flex justify-center items-center  rounded-none ">
@@ -248,6 +252,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           onClick={() => {
                             setSelectedType("contact");
                             setSelectedContact(contact);
+                            markConversationAsRead(contact.jid);
                           }}
                         >
                           <Avatar className="flex justify-center items-center relative rounded-none">
@@ -275,7 +280,21 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           <div className="flex flex-col max-w-28">
                             <span>{contact.name}</span>
                             <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                              {contact.show}
+                              {unreadMessages[contact.jid] &&
+                              unreadMessages[contact.jid] > 0 ? (
+                                <span className="text-red-400">
+                                  {unreadMessages[contact.jid]} new messages!
+                                </span>
+                              ) : (
+                                <span className="text-zinc-400 truncate">
+                                  {
+                                    // get the last message from
+                                    messages[contact.jid]?.[
+                                      messages[contact.jid]?.length - 1
+                                    ]?.body
+                                  }
+                                </span>
+                              )}
                             </div>
                           </div>
                         </a>
@@ -356,6 +375,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                 onClick={() => {
                                   setSelectedType("contact");
                                   setSelectedContact(contact);
+                                  markConversationAsRead(contact.jid);
                                 }}
                               >
                                 <Avatar className="flex justify-center items-center relative rounded-none">
@@ -406,6 +426,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           onClick={() => {
                             setSelectedType("contact");
                             setSelectedContact(contact);
+                            markConversationAsRead(contact.jid);
                           }}
                         >
                           <Avatar className="flex justify-center items-center relative rounded-none">
@@ -433,7 +454,21 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           <div className="flex flex-col max-w-28">
                             <span>{contact.name}</span>
                             <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                              {contact.show}
+                              {unreadMessages[contact.jid] &&
+                              unreadMessages[contact.jid] > 0 ? (
+                                <span className="text-red-400">
+                                  {unreadMessages[contact.jid]} new messages!
+                                </span>
+                              ) : (
+                                <span className="text-zinc-400 truncate">
+                                  {
+                                    // get the last message from
+                                    messages[contact.jid]?.[
+                                      messages[contact.jid]?.length - 1
+                                    ]?.body
+                                  }
+                                </span>
+                              )}
                             </div>
                           </div>
                         </a>
@@ -510,6 +545,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                 onClick={() => {
                                   setSelectedType("group");
                                   setSelectedGroup(contact);
+                                  markConversationAsRead(contact.jid);
                                 }}
                               >
                                 <Avatar className="flex justify-center items-center rounded-none">
@@ -552,6 +588,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           onClick={() => {
                             setSelectedGroup(contact);
                             setSelectedType("group");
+                            markConversationAsRead(contact.jid);
                           }}
                         >
                           <Avatar className="flex justify-center items-center rounded-none">
@@ -572,7 +609,21 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           <div className="flex flex-col max-w-28">
                             <span>{contact.name}</span>
                             <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                              {contact.isPublic ? "public" : "private"}
+                              {unreadMessages[contact.jid] &&
+                              unreadMessages[contact.jid] > 0 ? (
+                                <span className="text-red-400">
+                                  {unreadMessages[contact.jid]} new messages!
+                                </span>
+                              ) : (
+                                <span className="text-zinc-400 truncate">
+                                  {
+                                    // get the last message from
+                                    messages[contact.jid]?.[
+                                      messages[contact.jid]?.length - 1
+                                    ]?.body
+                                  }
+                                </span>
+                              )}
                             </div>
                           </div>
                         </a>
@@ -649,6 +700,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                                 onClick={() => {
                                   setSelectedType("group");
                                   setSelectedGroup(contact);
+                                  markConversationAsRead(contact.jid);
                                 }}
                               >
                                 <Avatar className="flex justify-center items-center  rounded-3xl border">
@@ -685,6 +737,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           onClick={() => {
                             setSelectedGroup(contact);
                             setSelectedType("group");
+                            markConversationAsRead(contact.jid);
                           }}
                         >
                           <Avatar className="flex justify-center items-center rounded-3xl border">
@@ -700,7 +753,21 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           <div className="flex flex-col max-w-28">
                             <span>{contact.name}</span>
                             <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
-                              {contact.isPublic ? "public" : "private"}
+                              {unreadMessages[contact.jid] &&
+                              unreadMessages[contact.jid] > 0 ? (
+                                <span className="text-red-400">
+                                  {unreadMessages[contact.jid]} new messages!
+                                </span>
+                              ) : (
+                                <span className="text-zinc-400 truncate">
+                                  {
+                                    // get the last message from
+                                    messages[contact.jid]?.[
+                                      messages[contact.jid]?.length - 1
+                                    ]?.body
+                                  }
+                                </span>
+                              )}
                             </div>
                           </div>
                         </a>

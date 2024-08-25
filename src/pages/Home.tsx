@@ -108,7 +108,6 @@ export default function Home() {
       </div>
 
       <div className="flex justify-between max-w-7xl w-full items-start text-xs md:text-sm text-muted-foreground ">
-        <p></p>
         <p className="max-w-[150px] sm:max-w-lg text-right">
           {isConnected ? "Connected" : "Disconnected"} to{" "}
           <a
@@ -123,7 +122,8 @@ export default function Home() {
           ) : (
             <Loader2 className="w-4 h-4 inline-block ml-1 mb-1 animate-spin duration-1000" />
           )}
-        </p>
+        </p>{" "}
+        <p></p>
       </div>
     </main>
   );

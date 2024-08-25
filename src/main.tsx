@@ -1,3 +1,5 @@
+import "./index.css";
+
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -7,8 +9,7 @@ import Login from "@/pages/Login.tsx";
 import SignUp from "@/pages/SignUp.tsx";
 import Home from "@/pages/Home.tsx";
 
-import "./index.css";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner.tsx";
 
 import { XmppProvider } from "@/lib/XmppContext.tsx";
 import { UserProvider } from "@/lib/UserContext.tsx";
@@ -48,14 +49,16 @@ const router = createBrowserRouter([
 ]);
 
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-    <UserProvider>
-      <XmppProvider>
-        <RouterProvider router={router} />
-        <Toaster />
-      </XmppProvider>
-    </UserProvider>
-  </ThemeProvider>
+  <>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <UserProvider>
+        <XmppProvider>
+          <RouterProvider router={router} />
+          <Toaster offset={12} />
+        </XmppProvider>
+      </UserProvider>
+    </ThemeProvider>
+  </>
 );
 
 // The AnimatedCursor component remains commented out
