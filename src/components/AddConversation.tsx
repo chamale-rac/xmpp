@@ -1,4 +1,3 @@
-import { DialogTrigger } from "@radix-ui/react-dialog";
 import {
   Dialog,
   DialogClose,
@@ -7,7 +6,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "./ui/dialog";
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "./ui/button";
 import { SquarePen } from "lucide-react";
 import { Label } from "./ui/label";

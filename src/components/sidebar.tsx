@@ -1,13 +1,13 @@
 import {
-  Bell,
   CirclePlus,
   Globe,
+  InboxIcon,
   UserRoundCheck,
   UserRoundX,
   UsersRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -33,6 +33,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
 import CreateGroup from "./CreateGroup";
 import StatusBadge from "./StatusBadge";
 
@@ -79,8 +91,8 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
           </div>
 
           <div>
-            <Popover>
-              <PopoverTrigger asChild>
+            <Dialog>
+              <DialogTrigger asChild>
                 <a
                   href="#"
                   className={cn(
@@ -88,22 +100,31 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                     "h-9 w-9"
                   )}
                 >
-                  <Bell size={20} />
+                  <InboxIcon size={20} />
                 </a>
-              </PopoverTrigger>
+              </DialogTrigger>
 
-              <PopoverContent
-                align="end"
-                alignOffset={-36}
-                className="max-w-[275px] max-h-60 overflow-hidden"
-              >
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Inbox />
+              <DialogContent className="sm:max-w-md overflow-hidden py-5 pb-6 px-1">
+                <div className="flex items-center space-x-2">
+                  <div className="grid flex-1 gap-4">
+                    <div className="px-4 py-2">
+                      <DialogHeader className="mb-4">
+                        <DialogTitle>Inbox</DialogTitle>
+                        <DialogDescription>
+                          Friend requests and group invitations.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <Inbox />
+                    </div>
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
+                <DialogFooter className="sm:justify-between px-3.5">
+                  <DialogClose asChild>
+                    <Button variant="secondary">Quit</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             <Popover>
               <PopoverTrigger asChild>
                 <a

@@ -85,9 +85,9 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   const [isConnected, setIsConnected] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [messages, setMessages] = useState<{ [jid: string]: Message[] }>({});
-  const [historyFetched, setHistoryFetched] = useState<{
-    [jid: string]: boolean;
-  }>({});
+  // const [historyFetched, setHistoryFetched] = useState<{
+  //   [jid: string]: boolean;
+  // }>({});
   const [gettingContacts, setGettingContacts] = useState(true);
   const [gettingGroups, setGettingGroups] = useState(true);
   const [subscriptionRequests, setSubscriptionRequests] = useState<
@@ -161,7 +161,9 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       newBookmarks.forEach((bookmark) => {
         if (bookmark.type === "invitation") {
           setGroupInvitations((prev) => {
-            const invitationExists = prev.some((i) => i.from === bookmark.jid);
+            const invitationExists = prev.some(
+              (i) => i.room === bookmark.jid && i.from === bookmark.inviter
+            );
             if (invitationExists) {
               return prev;
             } else {
@@ -670,6 +672,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         requestRoster(true);
         getJoinedGroups(true);
         getBookmarks();
+        getMessageHistory(usernameRef.current + "@" + xmppOptions.domain);
       });
 
       xmppClient.on("offline", () => {
@@ -699,29 +702,29 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
   }, []);
 
   // Request message history when selectedContact changes
-  useEffect(() => {
-    if (selectedContact && !historyFetched[selectedContact.jid]) {
-      getMessageHistory(selectedContact.jid);
-      setHistoryFetched((prev) => ({
-        ...prev,
-        [selectedContact.jid]: true,
-      }));
+  // useEffect(() => {
+  //   if (selectedContact && !historyFetched[selectedContact.jid]) {
+  //     getMessageHistory(selectedContact.jid);
+  //     setHistoryFetched((prev) => ({
+  //       ...prev,
+  //       [selectedContact.jid]: true,
+  //     }));
 
-      if (
-        selectedContact.jid ===
-        usernameRef.current + "@" + xmppOptions.domain
-      ) {
-        // mark all the elements as true
-        setHistoryFetched((prev) => {
-          const newHistoryFetched = { ...prev };
-          contacts.forEach((contact) => {
-            newHistoryFetched[contact.jid] = true;
-          });
-          return newHistoryFetched;
-        });
-      }
-    }
-  }, [selectedContact, historyFetched]);
+  //     if (
+  //       selectedContact.jid ===
+  //       usernameRef.current + "@" + xmppOptions.domain
+  //     ) {
+  //       // mark all the elements as true
+  //       setHistoryFetched((prev) => {
+  //         const newHistoryFetched = { ...prev };
+  //         contacts.forEach((contact) => {
+  //           newHistoryFetched[contact.jid] = true;
+  //         });
+  //         return newHistoryFetched;
+  //       });
+  //     }
+  //   }
+  // }, [selectedContact, historyFetched]);
 
   const getMessageHistory = useCallback((jid: string) => {
     if (xmppRef.current) {
@@ -1712,7 +1715,7 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
 
       // Reset other states
       setSubscriptionRequests([]);
-      setHistoryFetched({});
+      // setHistoryFetched({});
       setGettingContacts(true);
       setGettingGroups(true);
       setFilesToBeUploaded([]);
