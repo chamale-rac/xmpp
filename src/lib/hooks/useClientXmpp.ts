@@ -59,9 +59,14 @@ interface GroupInvitation {
 }
 
 interface Bookmark {
+  id: string;
+  type: "room" | "subscription" | "invitation";
   jid: string;
   name: string;
-  autojoin: boolean;
+  autojoin?: boolean;
+  message?: string; // For subscription requests
+  inviter?: string; // For group invitations
+  reason?: string; // For group invitations
 }
 
 export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
@@ -116,30 +121,63 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     const storage = stanza.getChild("query").getChild("storage");
     if (storage) {
       console.log("Bookmarks stanza:", storage.toString());
-      const conferenceNodes = storage.getChildren("conference");
-      const newBookmarks: Bookmark[] = conferenceNodes.map((node: any) => ({
+      const bookmarkNodes = storage.getChildren("bookmark");
+      const newBookmarks: Bookmark[] = bookmarkNodes.map((node: any) => ({
+        id: node.attrs.id,
+        type: node.attrs.type as "room" | "subscription" | "invitation",
         jid: node.attrs.jid,
         name: node.attrs.name || node.attrs.jid.split("@")[0],
         autojoin: node.attrs.autojoin === "true",
+        message: node.attrs.message,
+        inviter: node.attrs.inviter,
+        reason: node.attrs.reason,
       }));
 
+      newBookmarks.forEach((bookmark) => {
+        console.log("Bookmark:", bookmark);
+      });
+
       setBookmarks(newBookmarks);
+
+      console.log("Bookmarks XD:", newBookmarks);
+
+      // Process subscription requests and group invitations
+      newBookmarks.forEach((bookmark) => {
+        if (bookmark.type === "invitation") {
+          setGroupInvitations((prev) => {
+            const invitationExists = prev.some((i) => i.from === bookmark.jid);
+            if (invitationExists) {
+              return prev;
+            } else {
+              return [
+                ...prev,
+                {
+                  from: bookmark.inviter || "",
+                  room: bookmark.jid,
+                  inviter: bookmark.inviter || "",
+                  reason: bookmark.reason,
+                },
+              ];
+            }
+          });
+        }
+      });
     }
   }, []);
 
-  const addBookmark = useCallback(
-    (roomJid: string, name: string, autojoin: boolean) => {
-      if (xmppRef.current) {
-        // avoid duplicated bookmarks based on the roomJid
-        const bookmarkExists = bookmarks.some(
-          (bookmark) => bookmark.jid === roomJid
+  const addBookmark = useCallback((bookmark: Bookmark) => {
+    if (xmppRef.current) {
+      setBookmarks((prevBookmarks) => {
+        const bookmarkExists = prevBookmarks.some(
+          (b) => b.jid === bookmark.jid && b.type === bookmark.type
         );
         if (bookmarkExists) {
-          return;
+          return prevBookmarks;
         }
 
-        const newBookmarks = [...bookmarks, { jid: roomJid, name, autojoin }];
+        const newBookmarks = [...prevBookmarks, bookmark];
 
+        // Send the updated bookmarks to the server
         const iqStanza = xml(
           "iq",
           { type: "set", id: "bookmarks2" },
@@ -149,11 +187,16 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
             xml(
               "storage",
               { xmlns: "storage:bookmarks" },
-              ...newBookmarks.map((bookmark) =>
-                xml("conference", {
-                  jid: bookmark.jid,
-                  name: bookmark.name,
-                  autojoin: bookmark.autojoin.toString(),
+              ...newBookmarks.map((b) =>
+                xml("bookmark", {
+                  id: b.id,
+                  type: b.type,
+                  jid: b.jid,
+                  name: b.name,
+                  autojoin: b.autojoin?.toString(),
+                  message: b.message,
+                  inviter: b.inviter,
+                  reason: b.reason,
                 })
               )
             )
@@ -161,19 +204,17 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         );
         xmppRef.current.send(iqStanza);
 
-        setBookmarks(newBookmarks);
-      }
-    },
-    [bookmarks]
-  );
+        return newBookmarks;
+      });
+    }
+  }, []);
 
-  const removeBookmark = useCallback(
-    (roomJid: string) => {
-      if (xmppRef.current) {
-        const newBookmarks = bookmarks.filter(
-          (bookmark) => bookmark.jid !== roomJid
-        );
+  const removeBookmark = useCallback((id: string) => {
+    if (xmppRef.current) {
+      setBookmarks((prevBookmarks) => {
+        const newBookmarks = prevBookmarks.filter((b) => b.id !== id);
 
+        // Send the updated bookmarks to the server
         const iqStanza = xml(
           "iq",
           { type: "set", id: "bookmarks3" },
@@ -183,11 +224,16 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
             xml(
               "storage",
               { xmlns: "storage:bookmarks" },
-              ...newBookmarks.map((bookmark) =>
-                xml("conference", {
-                  jid: bookmark.jid,
-                  name: bookmark.name,
-                  autojoin: bookmark.autojoin.toString(),
+              ...newBookmarks.map((b) =>
+                xml("bookmark", {
+                  id: b.id,
+                  type: b.type,
+                  jid: b.jid,
+                  name: b.name,
+                  autojoin: b.autojoin?.toString(),
+                  message: b.message,
+                  inviter: b.inviter,
+                  reason: b.reason,
                 })
               )
             )
@@ -195,11 +241,10 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         );
         xmppRef.current.send(iqStanza);
 
-        setBookmarks(newBookmarks);
-      }
-    },
-    [bookmarks]
-  );
+        return newBookmarks;
+      });
+    }
+  }, []);
 
   const handleGroupMessage = useCallback((stanza: any) => {
     console.log("Group message stanza:", stanza.toString());
@@ -669,64 +714,69 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
-  const handlePresence = useCallback((stanza: any) => {
-    const from = stanza.getAttr("from").split("/")[0];
-    const type = stanza.getAttr("type");
-    let status = stanza.getChildText("status") || "online";
-    let show = stanza.getChildText("show") || "chat";
+  const handlePresence = useCallback(
+    (stanza: any) => {
+      const from = stanza.getAttr("from").split("/")[0];
+      const type = stanza.getAttr("type");
+      let status = stanza.getChildText("status") || "online";
+      let show = stanza.getChildText("show") || "chat";
 
-    if (type === "unavailable") {
-      status = "unknown";
-      show = "offline";
-    } else if (type === "error") {
-      status = "unknown";
-      show = "unknown";
-    }
+      if (type === "unavailable") {
+        status = "unknown";
+        show = "offline";
+      } else if (type === "error") {
+        status = "unknown";
+        show = "unknown";
+      }
 
-    if (type === "subscribe") {
-      setSubscriptionRequests((prev) => [...prev, { from, message: status }]);
-    } else {
-      setContacts((prevContacts) => {
-        const contactExists = prevContacts.some(
-          (contact) => contact.jid === from
-        );
-        if (contactExists) {
-          return prevContacts.map((contact) =>
-            contact.jid === from
-              ? { ...contact, name: from.split("@")[0], status, show }
-              : contact
+      if (type === "subscribe") {
+        console.log("Subscription request from:", from);
+
+        setSubscriptionRequests((prev) => [...prev, { from, message: status }]);
+      } else {
+        setContacts((prevContacts) => {
+          const contactExists = prevContacts.some(
+            (contact) => contact.jid === from
           );
-        } else {
-          return [
-            ...prevContacts,
-            { jid: from, name: from.split("@")[0], status, show },
-          ];
-        }
-      });
+          if (contactExists) {
+            return prevContacts.map((contact) =>
+              contact.jid === from
+                ? { ...contact, name: from.split("@")[0], status, show }
+                : contact
+            );
+          } else {
+            return [
+              ...prevContacts,
+              { jid: from, name: from.split("@")[0], status, show },
+            ];
+          }
+        });
 
-      setSelectedContact((prev) => {
-        if (prev && prev.jid === from) {
-          return {
-            ...prev,
-            status,
-            show,
-          };
-        }
-        return prev;
-      });
+        setSelectedContact((prev) => {
+          if (prev && prev.jid === from) {
+            return {
+              ...prev,
+              status,
+              show,
+            };
+          }
+          return prev;
+        });
 
-      // Create an empty message array for the contact if it doesn't exist, only if still this not exists, all inside
-      setMessages((prevMessages) => {
-        if (!prevMessages[from]) {
-          return {
-            ...prevMessages,
-            [from]: [],
-          };
-        }
-        return prevMessages;
-      });
-    }
-  }, []);
+        // Create an empty message array for the contact if it doesn't exist, only if still this not exists, all inside
+        setMessages((prevMessages) => {
+          if (!prevMessages[from]) {
+            return {
+              ...prevMessages,
+              [from]: [],
+            };
+          }
+          return prevMessages;
+        });
+      }
+    },
+    [addBookmark]
+  );
 
   const requestRoster = useCallback(
     (toggleGettingContacts: boolean = false) => {
@@ -797,22 +847,31 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     setGettingContacts(false);
   };
 
+  // Update acceptSubscription function
   const acceptSubscription = useCallback(
     (jid: string) => {
       if (xmppRef.current) {
-        xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" })); // Accept the subscription
-        xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" })); // Automatically subscribe back
+        xmppRef.current.send(xml("presence", { to: jid, type: "subscribed" }));
+        xmppRef.current.send(xml("presence", { to: jid, type: "subscribe" }));
         setSubscriptionRequests((prev) =>
           prev.filter((request) => request.from !== jid)
         );
 
-        // requestRoster();
+        // Remove the subscription request bookmark
+        const bookmarkToRemove = bookmarks.find(
+          (b) => b.type === "subscription" && b.jid === jid
+        );
+        if (bookmarkToRemove) {
+          removeBookmark(bookmarkToRemove.id);
+        }
+
         requestRoster();
       }
     },
-    [requestRoster]
+    [bookmarks, removeBookmark, requestRoster]
   );
 
+  // Update denySubscription function
   const denySubscription = useCallback(
     (jid: string) => {
       if (xmppRef.current) {
@@ -823,10 +882,18 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
           prev.filter((request) => request.from !== jid)
         );
 
+        // Remove the subscription request bookmark
+        const bookmarkToRemove = bookmarks.find(
+          (b) => b.type === "subscription" && b.jid === jid
+        );
+        if (bookmarkToRemove) {
+          removeBookmark(bookmarkToRemove.id);
+        }
+
         requestRoster();
       }
     },
-    [requestRoster]
+    [bookmarks, removeBookmark, requestRoster]
   );
 
   const handleMessage = useCallback((stanza: any) => {
@@ -1001,53 +1068,65 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     [contacts]
   );
 
-  const joinGroup = useCallback((roomJid: string) => {
-    if (xmppRef.current) {
-      console.log(`Joining group: ${roomJid}`);
+  const joinGroup = useCallback(
+    (roomJid: string) => {
+      if (xmppRef.current) {
+        console.log(`Joining group: ${roomJid}`);
 
-      // Generate use actual username
-      const nickname = usernameRef.current.split("@")[0];
+        // Generate use actual username
+        const nickname = usernameRef.current.split("@")[0];
 
-      // Send presence stanza to join the room
-      const presenceStanza = xml(
-        "presence",
-        { to: `${roomJid}/${nickname}` },
-        xml(
-          "x",
-          { xmlns: "http://jabber.org/protocol/muc" },
-          xml("history", { maxstanzas: "20" }) // Request last 20 messages
-        )
-      );
+        // Send presence stanza to join the room
+        const presenceStanza = xml(
+          "presence",
+          { to: `${roomJid}/${nickname}` },
+          xml(
+            "x",
+            { xmlns: "http://jabber.org/protocol/muc" },
+            xml("history", { maxstanzas: "20" }) // Request last 20 messages
+          )
+        );
 
-      xmppRef.current.send(presenceStanza);
+        xmppRef.current.send(presenceStanza);
 
-      // Update local state
-      console.log("Groups-LOG 5");
-      setGroups((prevGroups) =>
-        prevGroups.map((group) =>
-          group.jid === roomJid
-            ? {
-                ...group,
-                isJoined: true,
-                participants: [...group.participants, usernameRef.current],
-              }
-            : group
-        )
-      );
+        // Update local state
+        console.log("Groups-LOG 5");
+        setGroups((prevGroups) =>
+          prevGroups.map((group) =>
+            group.jid === roomJid
+              ? {
+                  ...group,
+                  isJoined: true,
+                  participants: [...group.participants, usernameRef.current],
+                }
+              : group
+          )
+        );
 
-      // Update the selected group if it's the same room
-      setSelectedGroup((prevGroup) => {
-        if (prevGroup && prevGroup.jid === roomJid) {
-          return {
-            ...prevGroup,
-            isJoined: true,
-            participants: [...prevGroup.participants, usernameRef.current],
-          };
-        }
-        return prevGroup;
-      });
-    }
-  }, []);
+        // Update the selected group if it's the same room
+        setSelectedGroup((prevGroup) => {
+          if (prevGroup && prevGroup.jid === roomJid) {
+            return {
+              ...prevGroup,
+              isJoined: true,
+              participants: [...prevGroup.participants, usernameRef.current],
+            };
+          }
+          return prevGroup;
+        });
+
+        // addBookmark for the autojoin
+        addBookmark({
+          id: uuidv4(),
+          type: "room",
+          jid: roomJid,
+          name: roomJid.split("@")[0],
+          autojoin: true,
+        });
+      }
+    },
+    [addBookmark]
+  );
 
   const setPresence = useCallback(
     (status: "away" | "chat" | "dnd" | "xa") => {
@@ -1278,7 +1357,13 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         ]);
 
         // Add the room to bookmarks
-        addBookmark(roomJid, groupName, true);
+        addBookmark({
+          id: uuidv4(),
+          type: "room",
+          jid: roomJid,
+          name: groupName,
+          autojoin: true,
+        });
 
         return roomJid;
       }
@@ -1369,105 +1454,150 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
-  const handleGroupInvitation = useCallback((stanza: any) => {
-    console.log("Group invitation stanza:", stanza.toString());
-    let from, room, inviter, reason;
+  const handleGroupInvitation = useCallback(
+    (stanza: any) => {
+      console.log("Group invitation stanza:", stanza.toString());
+      let from, room, inviter, reason;
 
-    const x = stanza.getChild("x");
-    if (x && x.attrs.xmlns === "http://jabber.org/protocol/muc#user") {
-      // Handle the standard MUC invitation format
-      from = stanza.getAttr("from");
-      room = from;
-      const invite = x.getChild("invite");
-      inviter = invite.getAttr("from");
-      reason = invite.getChildText("reason");
-    } else if (x && x.attrs.xmlns === "jabber:x:conference") {
-      // Handle the alternative conference invitation format
-      from = stanza.getAttr("from");
-      room = x.getAttr("jid");
-      inviter = from;
-      reason = x.getAttr("reason") || "";
-    } else {
-      // If neither format matches, log an error and return
-      console.error("Unrecognized invitation format:", stanza.toString());
-      return;
-    }
-
-    setGroupInvitations((prev) => {
-      // Check if the invitation already exists
-      const invitationExists = prev.some((inv) => inv.room === room);
-      if (invitationExists) {
-        return prev;
+      const x = stanza.getChild("x");
+      if (x && x.attrs.xmlns === "http://jabber.org/protocol/muc#user") {
+        from = stanza.getAttr("from");
+        room = from;
+        const invite = x.getChild("invite");
+        inviter = invite.getAttr("from");
+        reason = invite.getChildText("reason");
+      } else if (x && x.attrs.xmlns === "jabber:x:conference") {
+        from = stanza.getAttr("from");
+        room = x.getAttr("jid");
+        inviter = from;
+        reason = x.getAttr("reason") || "";
       } else {
-        return [
-          ...prev,
-          {
-            from,
-            room,
+        console.error("Unrecognized invitation format:", stanza.toString());
+        return;
+      }
+
+      // Console log the invitation details
+      console.log("INVITATION XD");
+
+      setGroupInvitations((prev) => {
+        const invitationExists = prev.some((inv) => inv.room === room);
+        if (invitationExists) {
+          return prev;
+        } else {
+          // Add group invitation to bookmarks
+          const newBookmark: Bookmark = {
+            id: uuidv4(),
+            type: "invitation",
+            jid: room,
+            name: room.split("@")[0],
             inviter,
             reason,
-          },
-        ];
-      }
-    });
-  }, []);
+          };
+          addBookmark(newBookmark);
 
-  const acceptGroupInvitation = useCallback((invitation: GroupInvitation) => {
-    if (xmppRef.current) {
-      const presenceStanza = xml(
-        "presence",
-        { to: `${invitation.room}/${usernameRef.current}` },
-        xml("x", { xmlns: "http://jabber.org/protocol/muc" })
-      );
-      xmppRef.current.send(presenceStanza);
+          return [
+            ...prev,
+            {
+              from,
+              room,
+              inviter,
+              reason,
+            },
+          ];
+        }
+      });
+    },
+    [addBookmark]
+  );
 
-      // Remove the invitation from the list
-      setGroupInvitations((prev) =>
-        prev.filter((inv) => inv.room !== invitation.room)
-      );
+  const acceptGroupInvitation = useCallback(
+    (invitation: GroupInvitation) => {
+      if (xmppRef.current) {
+        const presenceStanza = xml(
+          "presence",
+          { to: `${invitation.room}/${usernameRef.current}` },
+          xml("x", { xmlns: "http://jabber.org/protocol/muc" })
+        );
+        xmppRef.current.send(presenceStanza);
 
-      // Add the joined group to the groups list
+        setGroupInvitations((prev) =>
+          prev.filter((inv) => inv.room !== invitation.room)
+        );
 
-      console.log("Groups-LOG 7");
-      setGroups((prev) => [
-        ...prev,
-        {
+        // Add bookmark for the autojoin
+        const newBookmark: Bookmark = {
+          id: uuidv4(),
+          type: "room",
           jid: invitation.room,
           name: invitation.room.split("@")[0],
-          participants: [],
-          isJoined: true,
-        },
-      ]);
+          autojoin: true,
+        };
+        addBookmark(newBookmark);
 
-      getRoomInfo(invitation.room);
-    }
-  }, []);
+        // Remove the group invitation bookmark
+        setBookmarks((prevBookmarks) => {
+          const invitationBookmark = prevBookmarks.find(
+            (b) => b.type === "invitation" && b.jid === invitation.room
+          );
+          if (invitationBookmark) {
+            removeBookmark(invitationBookmark.id);
+          }
+          return prevBookmarks;
+        });
 
-  const declineGroupInvitation = useCallback((invitation: GroupInvitation) => {
-    if (xmppRef.current) {
-      const declineStanza = xml(
-        "message",
-        { to: invitation.room },
-        xml(
-          "x",
-          { xmlns: "http://jabber.org/protocol/muc#user" },
-          xml("decline", { to: invitation.inviter })
-        )
-      );
-      xmppRef.current.send(declineStanza);
+        setGroups((prev) => [
+          ...prev,
+          {
+            jid: invitation.room,
+            name: invitation.room.split("@")[0],
+            participants: [],
+            isJoined: true,
+          },
+        ]);
 
-      // Remove the invitation from the list
-      setGroupInvitations((prev) =>
-        prev.filter((inv) => inv.room !== invitation.room)
-      );
-    }
-  }, []);
+        getRoomInfo(invitation.room);
+      }
+    },
+    [addBookmark, removeBookmark]
+  );
+
+  const declineGroupInvitation = useCallback(
+    (invitation: GroupInvitation) => {
+      if (xmppRef.current) {
+        const declineStanza = xml(
+          "message",
+          { to: invitation.room },
+          xml(
+            "x",
+            { xmlns: "http://jabber.org/protocol/muc#user" },
+            xml("decline", { to: invitation.inviter })
+          )
+        );
+        xmppRef.current.send(declineStanza);
+
+        setGroupInvitations((prev) =>
+          prev.filter((inv) => inv.room !== invitation.room)
+        );
+
+        // Remove the group invitation bookmark
+        const bookmarkToRemove = bookmarks.find(
+          (b) => b.type === "invitation" && b.jid === invitation.room
+        );
+        if (bookmarkToRemove) {
+          removeBookmark(bookmarkToRemove.id);
+        }
+      }
+    },
+    [bookmarks, removeBookmark]
+  );
 
   const autoJoinBookmarkedRooms = useCallback(() => {
     bookmarks.forEach((bookmark) => {
       if (bookmark.autojoin) {
+        console.log("Autojoining bookmarked room:", bookmark.jid);
         joinGroup(bookmark.jid);
       }
+      console.log("Autojoin bookmarked room (FAKE):", bookmark.jid);
     });
   }, [bookmarks, joinGroup]);
 

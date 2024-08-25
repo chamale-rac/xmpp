@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext, ReactNode, useState } from "react";
 import { useEphemeralXmpp } from "@/lib/hooks/useEphemeralXmpp";
 import { useXmppClient } from "@/lib/hooks/useClientXmpp";
@@ -8,10 +7,11 @@ const globalXmppOptions = {
   domain: "alumchat.lol",
   resource: "",
   mucService: "conference.alumchat.lol",
-  uploadService: "httpfileupload.alumchat.lol",
+  uploadService: "httpfileupload.lol",
 };
 
 interface Message {
+  id: string;
   from: string;
   to: string;
   body: string;
@@ -48,6 +48,17 @@ interface GroupInvitation {
   reason?: string;
 }
 
+interface Bookmark {
+  id: string;
+  type: "room" | "subscription" | "invitation";
+  jid: string;
+  name: string;
+  autojoin?: boolean;
+  message?: string;
+  inviter?: string;
+  reason?: string;
+}
+
 // Define the shape of your context
 interface XmppContextProps {
   registerXmppUser: (username: string, password: string) => Promise<boolean>;
@@ -59,7 +70,7 @@ interface XmppContextProps {
     message: string,
     shareOnlineStatus?: boolean
   ) => void;
-  getContactDetails: (jid: string) => any;
+  getContactDetails: (jid: string) => Contact | undefined;
   sendMessage: (to: string, body: string) => void;
   setPresence: (status: "away" | "chat" | "dnd" | "xa") => void;
   setStatusMessage: (message: string) => void;
@@ -77,7 +88,7 @@ interface XmppContextProps {
   denySubscription: (jid: string) => void;
   gettingContacts: boolean;
   selectedContact: Contact | undefined;
-  setSelectedContact: (user: Contact) => void;
+  setSelectedContact: (user: Contact | undefined) => void;
   globalXmppOptions: {
     service: string;
     domain: string;
@@ -97,17 +108,18 @@ interface XmppContextProps {
     }
   ) => string | undefined;
   joinGroup: (roomJid: string) => void;
-  inviteToGroup: (groupJid: string, userJid: string, reason: string) => void;
+  inviteToGroup: (groupJid: string, userJid: string, reason?: string) => void;
   groupInvitations: GroupInvitation[];
   acceptGroupInvitation: (invitation: GroupInvitation) => void;
   declineGroupInvitation: (invitation: GroupInvitation) => void;
   gettingGroups: boolean;
-  setSelectedGroup: (group: Group) => void;
+  setSelectedGroup: (group: Group | undefined) => void;
   selectedGroup: Group | undefined;
   selectedType: "contact" | "group" | undefined;
-  setSelectedType: (type: "contact" | "group") => void;
+  setSelectedType: (type: "contact" | "group" | undefined) => void;
   sendGroupMessage: (to: string, body: string) => void;
-  addBookmark: (roomJid: string, name: string, autojoin: boolean) => void;
+  addBookmark: (bookmark: Bookmark) => void;
+  removeBookmark: (id: string) => void;
   setIsConnected: (connected: boolean) => void;
   closeSession: () => void;
 }
@@ -160,6 +172,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     setSelectedType,
     sendGroupMessage,
     addBookmark,
+    removeBookmark,
     setIsConnected,
     closeSession,
   } = useXmppClient(globalXmppOptions);
@@ -208,6 +221,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         setSelectedType,
         sendGroupMessage,
         addBookmark,
+        removeBookmark,
         setIsConnected,
         closeSession,
       }}

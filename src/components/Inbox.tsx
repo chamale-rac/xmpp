@@ -15,7 +15,6 @@ const Inbox = () => {
     groupInvitations,
     acceptGroupInvitation,
     declineGroupInvitation,
-    addBookmark,
   } = useXmpp();
 
   if (subscriptionRequests.length === 0 && groupInvitations.length === 0) {
@@ -112,11 +111,6 @@ const Inbox = () => {
                 className="p-1 h-6 bg-black/60"
                 onClick={() => {
                   acceptGroupInvitation(invitation);
-                  addBookmark(
-                    invitation.room,
-                    invitation.room.split("@")[0],
-                    true
-                  );
                 }}
               >
                 <Check className="w-4 h-4" />

@@ -23,7 +23,7 @@ export default function Home() {
       // Ensure triggerConnection is only called if not already connected
       triggerConnection(user.username, user.password);
     }
-  }, [isConnected, triggerConnection, user, navigate]);
+  }, [isConnected, triggerConnection, user, navigate, closeSession]);
 
   useEffect(() => {
     if (!user) {

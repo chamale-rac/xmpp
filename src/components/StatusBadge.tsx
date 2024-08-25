@@ -23,7 +23,7 @@ const StatusBadge = ({
         className
       )}
     >
-      {status === "xa" && <div className="w-full bg-white h-1" />}
+      {status === "dnd" && <div className="w-full bg-white h-1" />}
       {(status === "unknown" || status === "offline" || !status) && (
         <div className="w-1.5 h-1.5 rounded-full bg-muted" />
       )}
