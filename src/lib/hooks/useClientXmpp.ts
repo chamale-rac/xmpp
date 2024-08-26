@@ -852,6 +852,14 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
       items.forEach((item: any) => {
         const jid = item.attrs.jid.split("/")[0];
         const subscription = item.attrs.subscription;
+
+        if (subscription === "remove") {
+          updatedContacts = updatedContacts.filter(
+            (contact) => contact.jid !== jid
+          );
+          return;
+        }
+
         const name = item.attrs.name || item.attrs.jid.split("@")[0];
         const contactExists = prevContacts.some(
           (contact) => contact.jid === jid
@@ -1752,6 +1760,102 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     });
   }, []);
 
+  // 1. Function to toggle sharing online status
+  const toggleOnlineStatusSharing = useCallback(
+    (jid: string) => {
+      if (xmppRef.current) {
+        const contact = contacts.find((c) => c.jid === jid);
+        if (contact) {
+          const newShareStatus =
+            contact.subscription !== "from" && contact.subscription !== "both";
+          if (newShareStatus) {
+            xmppRef.current.send(
+              xml("presence", { to: jid, type: "subscribed" })
+            );
+          } else {
+            xmppRef.current.send(
+              xml("presence", { to: jid, type: "unsubscribed" })
+            );
+          }
+          // Update the contact's subscription status locally
+          setContacts((prevContacts) =>
+            prevContacts.map((c) =>
+              c.jid === jid
+                ? { ...c, subscription: newShareStatus ? "both" : "to" }
+                : c
+            )
+          );
+
+          setSelectedContact((prev) => {
+            if (prev && prev.jid === jid) {
+              return {
+                ...prev,
+                subscription: newShareStatus ? "both" : "to",
+              };
+            }
+            return prev;
+          });
+        }
+      }
+    },
+    [contacts]
+  );
+
+  // 2. Function to remove a contact
+  const removeContact = useCallback(
+    (jid: string) => {
+      if (xmppRef.current) {
+        // Send unsubscribe and unsubscribed presence stanzas
+        xmppRef.current.send(xml("presence", { to: jid, type: "unsubscribe" }));
+        xmppRef.current.send(
+          xml("presence", { to: jid, type: "unsubscribed" })
+        );
+
+        // Remove from roster
+        const removeIQ = xml(
+          "iq",
+          { type: "set", id: "remove1" },
+          xml(
+            "query",
+            { xmlns: "jabber:iq:roster" },
+            xml("item", { jid: jid, subscription: "none" })
+          )
+        );
+        xmppRef.current.send(removeIQ);
+
+        requestRoster();
+      }
+    },
+    [requestRoster]
+  );
+
+  // 3. Function to remove from roster (without unsubscribing)
+  const removeFromRoster = useCallback((jid: string) => {
+    if (xmppRef.current) {
+      // Remove from roster
+      const removeIQ = xml(
+        "iq",
+        { type: "set", id: "remove2" },
+        xml(
+          "query",
+          { xmlns: "jabber:iq:roster" },
+          xml("item", { jid: jid, subscription: "remove" })
+        )
+      );
+      xmppRef.current.send(removeIQ);
+
+      // Update local state
+      setSelectedType(undefined);
+      setSelectedContact(undefined);
+      setContacts((prevContacts) => prevContacts.filter((c) => c.jid !== jid));
+      setMessages((prevMessages) => {
+        const newMessages = { ...prevMessages };
+        delete newMessages[jid];
+        return newMessages;
+      });
+    }
+  }, []);
+
   const closeSession = useCallback(() => {
     if (xmppRef.current) {
       // Disconnect from the XMPP server
@@ -1794,6 +1898,32 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     }
   }, []);
 
+  useEffect(() => {
+    // update selected contact when contacts change
+    setSelectedContact((prev) => {
+      if (prev) {
+        const updatedContact = contacts.find((c) => c.jid === prev.jid);
+        if (updatedContact) {
+          return updatedContact;
+        }
+      }
+      return prev;
+    });
+  }, [contacts]);
+
+  useEffect(() => {
+    // update selected group when groups change
+    setSelectedGroup((prev) => {
+      if (prev) {
+        const updatedGroup = groups.find((g) => g.jid === prev.jid);
+        if (updatedGroup) {
+          return updatedGroup;
+        }
+      }
+      return prev;
+    });
+  }, [groups]);
+
   return {
     isConnected,
     addContact,
@@ -1835,5 +1965,8 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     unreadMessages,
     markConversationAsRead,
     leaveGroup,
+    toggleOnlineStatusSharing,
+    removeContact,
+    removeFromRoster,
   };
 };

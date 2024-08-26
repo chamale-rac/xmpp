@@ -16,8 +16,17 @@ import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 
 export default function ChatTopbar() {
-  const { selectedContact, selectedType, selectedGroup, username, leaveGroup } =
-    useXmpp();
+  const {
+    selectedContact,
+    selectedType,
+    selectedGroup,
+    username,
+    leaveGroup,
+    toggleOnlineStatusSharing,
+    removeContact,
+    addContact,
+    removeFromRoster,
+  } = useXmpp();
 
   if (selectedType === "contact" && selectedContact) {
     return (
@@ -91,31 +100,58 @@ export default function ChatTopbar() {
                       (selectedContact.subscription === "none" ||
                       !selectedContact.subscription ? (
                         <div className="grid gap-2">
-                          <Button size="sm" className="text-xs">
-                            Add Contact
+                          <Button
+                            size="sm"
+                            className="text-xs"
+                            onClick={() =>
+                              addContact(
+                                selectedContact.jid,
+                                "I would like to add you as a contact.",
+                                true
+                              )
+                            }
+                          >
+                            Send Contact Request
                           </Button>
                           <Button
                             variant="destructive"
                             size="sm"
                             className="text-xs"
+                            onClick={() =>
+                              removeFromRoster(selectedContact.jid)
+                            }
                           >
-                            Remove From Roster
+                            Remove
                           </Button>
                         </div>
                       ) : (
                         <div className="grid gap-2">
-                          <div className="flex gap-2 items-center mb-2 justify-between mx-1">
-                            <Label htmlFor="share-status" className=" !text-xs">
-                              Share my online status
-                            </Label>
-                            <Switch id="share-status" />
-                          </div>
+                          {selectedContact.subscription && (
+                            <div className="flex gap-2 items-center mb-2 justify-between mx-1">
+                              <Label
+                                htmlFor="share-status"
+                                className=" !text-xs"
+                              >
+                                Share my online status
+                              </Label>
+                              <Switch
+                                checked={
+                                  selectedContact.subscription === "from" ||
+                                  selectedContact.subscription === "both"
+                                }
+                                onCheckedChange={() =>
+                                  toggleOnlineStatusSharing(selectedContact.jid)
+                                }
+                              />
+                            </div>
+                          )}
                           <Button
                             variant="destructive"
                             size="sm"
                             className="text-xs"
+                            onClick={() => removeContact(selectedContact.jid)}
                           >
-                            Remove Contact
+                            Remove
                           </Button>
                         </div>
                       ))}

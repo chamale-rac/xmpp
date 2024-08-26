@@ -230,7 +230,7 @@ function AddContact() {
               onClick={() => handleSetActiveIndex(activeIndex + 1)}
               disabled={!FEATURES[activeIndex].continueCondition}
             >
-              {activeIndex === 1 ? "Add Contact" : "Next"}
+              {activeIndex === 1 ? "Send Request" : "Next"}
             </Button>
           )}
           {isSuccess && (

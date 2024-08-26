@@ -212,12 +212,13 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
             <AccordionTrigger hideChevron={isCollapsed}>
               {!isCollapsed ? (
                 <h1 className=" text-lg  opacity-85">
-                  Subscribed{" "}
+                  Subscribed to you{" "}
                   {!gettingContacts &&
                     contacts.filter(
                       (c) =>
                         c.subscription &&
                         c.subscription !== "none" &&
+                        c.subscription !== "to" &&
                         (c.jid.includes(search) || c.name?.includes(search))
                     ).length > 0 &&
                     `(${
@@ -225,6 +226,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                         (c) =>
                           c.subscription &&
                           c.subscription !== "none" &&
+                          c.subscription !== "to" &&
                           (c.jid.includes(search) || c.name?.includes(search))
                       ).length
                     })`}
@@ -271,6 +273,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                   (c) =>
                     c.subscription &&
                     c.subscription !== "none" &&
+                    c.subscription !== "to" &&
                     (c.jid.includes(search) || c.name?.includes(search))
                 ).length !== 0 ? (
                 contacts
@@ -278,6 +281,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                     (c) =>
                       c.subscription &&
                       c.subscription !== "none" &&
+                      c.subscription !== "to" &&
                       (c.jid.includes(search) || c.name?.includes(search))
                   )
                   .map((contact, index) =>
@@ -423,14 +427,16 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                     contacts.filter(
                       (c) =>
                         !c.subscription ||
-                        (c.subscription === "none" &&
+                        ((c.subscription === "none" ||
+                          c.subscription === "to") &&
                           (c.jid.includes(search) || c.name?.includes(search)))
                     ).length > 0 &&
                     `(${
                       contacts.filter(
                         (c) =>
                           !c.subscription ||
-                          (c.subscription === "none" &&
+                          ((c.subscription === "none" ||
+                            c.subscription === "to") &&
                             (c.jid.includes(search) ||
                               c.name?.includes(search)))
                       ).length
@@ -477,14 +483,14 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
               ) : contacts.filter(
                   (c) =>
                     !c.subscription ||
-                    (c.subscription === "none" &&
+                    ((c.subscription === "none" || c.subscription === "to") &&
                       (c.jid.includes(search) || c.name?.includes(search)))
                 ).length !== 0 ? (
                 contacts
                   .filter(
                     (c) =>
                       !c.subscription ||
-                      (c.subscription === "none" &&
+                      ((c.subscription === "none" || c.subscription === "to") &&
                         (c.jid.includes(search) || c.name?.includes(search)))
                   )
                   .map((contact, index) =>
