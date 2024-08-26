@@ -3,11 +3,12 @@ import { useEphemeralXmpp } from "@/lib/hooks/useEphemeralXmpp";
 import { useXmppClient } from "@/lib/hooks/useClientXmpp";
 
 const globalXmppOptions = {
-  service: "wss://alumchat.lol:7443/ws",
-  domain: "alumchat.lol",
-  resource: "",
-  mucService: "conference.alumchat.lol",
-  uploadService: "httpfileupload.alumchat.lol",
+  service: import.meta.env.VITE_SERVICE || "wss://alumchat.lol:7443/ws",
+  domain: import.meta.env.VITE_DOMAIN || "alumchat.lol",
+  resource: import.meta.env.VITE_RESOURCE || "",
+  mucService: import.meta.env.VITE_MUC_SERVICE || "conference.alumchat.lol",
+  uploadService:
+    import.meta.env.VITE_UPLOAD_SERVICE || "httpfileupload.alumchat.lol",
 };
 
 // service: "ws://alumchat.lol:7070/ws",
