@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "../ui/button";
+import { Button, buttonVariants } from "../ui/button";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,9 +12,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import InviteToGroup from "../InviteToGroup";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
 
 export default function ChatTopbar() {
-  const { selectedContact, selectedType, selectedGroup } = useXmpp();
+  const { selectedContact, selectedType, selectedGroup, username, leaveGroup } =
+    useXmpp();
 
   if (selectedType === "contact" && selectedContact) {
     return (
@@ -79,9 +82,43 @@ export default function ChatTopbar() {
                       </span>
                       <span className="text-xs">
                         <span className="font-bold">subscription:</span>{" "}
-                        {selectedContact.subscription}
+                        {selectedContact.subscription
+                          ? selectedContact.subscription
+                          : "none"}
                       </span>
                     </div>
+                    {selectedContact.jid.split("@")[0] !== username &&
+                      (selectedContact.subscription === "none" ||
+                      !selectedContact.subscription ? (
+                        <div className="grid gap-2">
+                          <Button size="sm" className="text-xs">
+                            Add Contact
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="text-xs"
+                          >
+                            Remove From Roster
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid gap-2">
+                          <div className="flex gap-2 items-center mb-2 justify-between mx-1">
+                            <Label htmlFor="share-status" className=" !text-xs">
+                              Share my online status
+                            </Label>
+                            <Switch id="share-status" />
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="text-xs"
+                          >
+                            Remove Contact
+                          </Button>
+                        </div>
+                      ))}
                   </div>
                 </CardContent>
               </Card>
@@ -141,13 +178,15 @@ export default function ChatTopbar() {
             <PopoverContent side="left" align="start" className="p-0">
               <Card className=" border-none shadow-none p-0">
                 <CardHeader>
-                  <CardTitle>{selectedGroup.name}</CardTitle>
+                  <CardTitle className="break-all">
+                    {selectedGroup.name}
+                  </CardTitle>
                 </CardHeader>
                 <Separator />
                 <CardContent className="mt-5">
                   <div className="grid gap-6">
                     <div className="grid gap-3 text-zinc-500">
-                      <span className="text-xs">
+                      <span className="text-xs break-all">
                         <span className="font-bold">jid:</span>{" "}
                         {selectedGroup.jid}
                       </span>
@@ -168,6 +207,18 @@ export default function ChatTopbar() {
                         joined: {selectedGroup.isJoined ? "yes" : "no"}
                       </span>
                     </div>
+                    {selectedGroup.isJoined && (
+                      <div className="grid gap-2">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => leaveGroup(selectedGroup.jid)}
+                        >
+                          Leave Group
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -27,11 +27,7 @@ function AddContact() {
   const [address, setAddress] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [shareStatus, setShareStatus] = useState(true);
-  const { addContact } = useXmpp();
-
-  function isValidEmail(email: string) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
+  const { addContact, globalXmppOptions } = useXmpp();
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (
@@ -56,32 +52,38 @@ function AddContact() {
         <>
           <DialogHeader className="mb-2">
             <DialogTitle>Add Contact</DialogTitle>
-            <DialogDescription>Please enter an XMPP address</DialogDescription>
+            <DialogDescription>
+              Please enter an username,{" "}
+              <span className="font-bold underline">
+                {globalXmppOptions.domain}
+              </span>{" "}
+              used for XMPP.
+            </DialogDescription>
           </DialogHeader>
-          <Label htmlFor="address" className="sr-only">
-            XMPP Address
+          <Label htmlFor="username" className="sr-only">
+            Username
           </Label>
           <Input
-            id="address"
-            placeholder="XMPP Address..."
+            id="username"
+            placeholder="Username"
             onChange={(e) => setAddress(e.target.value)}
             value={address}
             required
-            type="email"
+            type="text"
           />
-          {!isValidEmail(address) && address.length > 0 && (
-            <div className="text-red-400 text-xs truncate max-w-fit mt-1.5">
-              Input needs to be a valid XMPP address. e.g. x@x.x
+          {address.includes("@") && address.length > 0 && (
+            <div className="text-red-400 text-xs truncate mt-1.5">
+              Username should not include domain. e.g. user
             </div>
           )}
         </>
       ),
-      continueCondition: isValidEmail(address),
+      continueCondition: !address.includes("@") && address.length > 0,
     },
     {
       components: (
         <>
-          <DialogHeader className="mb-2">
+          <DialogHeader className="mb-3">
             <DialogTitle>Just one more step...</DialogTitle>
             <DialogDescription>
               Send a custom message! Feel free to leave it blank.
@@ -98,7 +100,7 @@ function AddContact() {
             required
             type="text"
           />
-          <div className="inline-flex items-center mt-2 gap-1">
+          <div className="inline-flex items-center mt-3 gap-1">
             <Switch
               id="share-status"
               checked={shareStatus}
@@ -129,7 +131,11 @@ function AddContact() {
   const handleSetActiveIndex = async (newIndex: number) => {
     setDirection(newIndex > activeIndex ? 1 : -1);
     if (newIndex === 2) {
-      await addContact(address, message, shareStatus);
+      await addContact(
+        address + "@" + globalXmppOptions.domain,
+        message,
+        shareStatus
+      );
       handleRestart();
       setIsSuccess(true);
     }

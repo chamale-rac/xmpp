@@ -91,10 +91,10 @@ const CreateGroup = () => {
 
                 <div>
                   <Label htmlFor="customAddress">
-                    Custom Address{" "}
-                    <span className="text-zinc-500">(Optional)</span>
+                    Address <span className="text-zinc-500">(Optional)</span>
                   </Label>
                   <Input
+                    disabled={true}
                     id="customAddress"
                     placeholder={
                       groupName

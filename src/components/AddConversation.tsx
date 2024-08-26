@@ -16,11 +16,8 @@ import { useState } from "react";
 import { useXmpp } from "@/lib/hooks/useXmpp";
 
 const AddConversation = () => {
-  const { addConversation } = useXmpp();
+  const { addConversation, globalXmppOptions } = useXmpp();
   const [address, setAddress] = useState("");
-  function isValidEmail(email: string) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
 
   const handleRestart = () => {
     setAddress("");
@@ -46,22 +43,22 @@ const AddConversation = () => {
               <DialogHeader className="mb-2">
                 <DialogTitle>Start/Join Conversation</DialogTitle>
                 <DialogDescription>
-                  Search some XMPP address to start a conversation...
+                  Type some new username to start a conversation...
                 </DialogDescription>
                 <Label htmlFor="address" className="sr-only">
-                  XMPP Address
+                  Username
                 </Label>
                 <Input
-                  id="address"
-                  placeholder="XMPP Address..."
+                  id="username"
+                  placeholder="Username"
                   onChange={(e) => setAddress(e.target.value)}
                   value={address}
                   required
                   type="email"
                 />{" "}
-                {!isValidEmail(address) && address.length > 0 && (
+                {address.includes("@") && address.length > 0 && (
                   <div className="text-red-400 text-xs truncate max-w-fit mt-1.5">
-                    Input needs to be a valid XMPP address. e.g. x@x.x
+                    Username should not include domain. e.g. user
                   </div>
                 )}
               </DialogHeader>
@@ -76,9 +73,9 @@ const AddConversation = () => {
           </DialogClose>
           <DialogClose asChild>
             <Button
-              disabled={!isValidEmail(address)}
+              disabled={address.length === 0 || address.includes("@")}
               onClick={() => {
-                addConversation(address);
+                addConversation(address + "@" + globalXmppOptions.domain);
                 handleRestart();
               }}
             >

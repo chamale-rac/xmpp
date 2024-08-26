@@ -50,7 +50,7 @@ export default function LandingPage() {
         </NavigationMenu>
       </div>
       <div className="flex-1 justify-center flex items-center mb-32">
-        <Card className="flex flex-col items-center justify-center space-y-4 text-center border-none">
+        <Card className="flex flex-col items-center justify-center space-y-4 text-center border-none shadow-none">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-2">
               <MessageCircle className="w-32 h-32 text-primary opacity-80" />

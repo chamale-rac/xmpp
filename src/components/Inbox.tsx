@@ -26,7 +26,7 @@ const Inbox = () => {
   }
 
   return (
-    <ScrollArea className="max-h-52 w-full grid gap-1 px-0">
+    <ScrollArea className="max-h-52 w-full grid gap-1 px-1">
       {subscriptionRequests.map((request) => (
         <>
           <button
@@ -44,8 +44,8 @@ const Inbox = () => {
                     <UserRound className="w-6 h-6" />
                   </div>
                   <div className="flex flex-col items-start w-full">
-                    <span className="truncate">{request.from}</span>
-                    <span className="text-zinc-400 text-xs truncate">
+                    <span className="truncate max-w-52">{request.from}</span>
+                    <span className="text-zinc-400 text-xs truncate max-w-52">
                       {request.message}
                     </span>
                   </div>
@@ -92,11 +92,13 @@ const Inbox = () => {
                     <UsersRound className="w-6 h-6" />
                   </div>
                   <div className="flex flex-col items-start w-full">
-                    <span className="truncate">{invitation.room}</span>
-                    <span className="text-zinc-400 text-xs truncate">
+                    <span className="truncate  max-w-52">
+                      {invitation.room}
+                    </span>
+                    <span className="text-zinc-400 text-xs truncate max-w-52">
                       by: {invitation.inviter}
                     </span>
-                    <span className="text-zinc-400 text-xs truncate">
+                    <span className="text-zinc-400 text-xs truncate max-w-52">
                       {invitation.reason}
                     </span>
                   </div>

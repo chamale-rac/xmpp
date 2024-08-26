@@ -15,7 +15,7 @@ const StatusBadge = ({
         {
           "bg-green-500": status === "chat",
           "bg-yellow-500": status === "away",
-          "bg-red-500": status === "dnd" || status === "xa",
+          "bg-red-500": status === "dnd" || status === "xa" || status === "new",
           "bg-gray-500":
             status === "unknown" || status === "offline" || !status,
           "bg-transparent": status === "private" || status === "public",
@@ -32,6 +32,9 @@ const StatusBadge = ({
       )}
       {status === "public" && (
         <Globe className="text-muted-foreground w-full h-full fill-muted" />
+      )}
+      {status === "new" && (
+        <div className="w-1.5 h-1.5 rounded-full bg-white/90" />
       )}
     </div>
   );

@@ -82,6 +82,9 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
     markConversationAsRead,
     messages,
     closeSession,
+    subscriptionRequests,
+    groupInvitations,
+    username,
   } = useXmpp();
 
   return (
@@ -102,10 +105,17 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                   href="#"
                   className={cn(
                     buttonVariants({ variant: "ghost", size: "icon" }),
-                    "h-9 w-9"
+                    "h-9 w-9 relative"
                   )}
                 >
                   <InboxIcon size={20} />
+                  {(subscriptionRequests.length > 0 ||
+                    groupInvitations.length > 0) && (
+                    <StatusBadge
+                      className="absolute top-0 right-0"
+                      status="new"
+                    />
+                  )}
                 </a>
               </DialogTrigger>
 
@@ -575,7 +585,10 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
                           />
                         </Avatar>
                         <div className="flex flex-col max-w-28">
-                          <span>{contact.name}</span>
+                          <span>
+                            {contact.name}{" "}
+                            {contact && contact.name === username && "(you)"}
+                          </span>
                           <div className="text-zinc-500 text-xs truncate max-w-fit flex gap-1 mt-0.5">
                             {unreadMessages[contact.jid] &&
                             unreadMessages[contact.jid] > 0 ? (

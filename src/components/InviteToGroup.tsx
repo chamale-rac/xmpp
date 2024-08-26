@@ -28,14 +28,18 @@ const InviteToGroup = () => {
 
   const isValidInput = (input: string) => {
     const jids = input.split(",").map((jid) => jid.trim());
-    return jids.every((jid) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(jid));
+    return jids.every((jid) => !jid.includes("@"));
   };
 
   const handleInvite = () => {
     if (selectedGroup) {
       const jids = invitees.split(",").map((jid) => jid.trim());
       jids.forEach((jid) => {
-        inviteToGroup(selectedGroup.jid, jid, reason);
+        inviteToGroup(
+          selectedGroup.jid,
+          jid + "@" + globalXmppOptions.domain,
+          reason
+        );
       });
       handleRestart();
     }
@@ -70,19 +74,19 @@ const InviteToGroup = () => {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="invitees">
-                    Invitees{" "}
+                    Invitees usernames{" "}
                     <span className="text-zinc-500">(comma-separated)</span>
                   </Label>
                   <Input
                     id="invitees"
-                    placeholder={`x@${globalXmppOptions.domain}, y@${globalXmppOptions.domain}`}
+                    placeholder="e.g. user, user2, user3"
                     onChange={(e) => setInvitees(e.target.value)}
                     value={invitees}
                     required
                   />
                   {!isValidInput(invitees) && invitees.length > 0 && (
                     <p className="text-red-500 text-sm mt-1">
-                      Please enter valid XMPP addresses separated by commas.
+                      Please enter valid usernames separated by commas.
                     </p>
                   )}
                 </div>

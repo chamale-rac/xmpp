@@ -1132,6 +1132,70 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     [contacts]
   );
 
+  const leaveGroup = useCallback((roomJid: string) => {
+    if (xmppRef.current) {
+      // Send a presence stanza with 'unavailable' type to leave the room
+      const leaveStanza = xml("presence", {
+        to: `${roomJid}/${usernameRef.current}`,
+        type: "unavailable",
+      });
+      xmppRef.current.send(leaveStanza);
+
+      // Update the local state
+      setGroups((prevGroups) =>
+        prevGroups.map((group) =>
+          group.jid === roomJid ? { ...group, isJoined: false } : group
+        )
+      );
+
+      // If the left group is currently selected, clear the selection
+      setSelectedType(undefined);
+      setSelectedGroup(undefined);
+
+      // Remove the group from bookmarks if it was auto-joined
+      setBookmarks((prevBookmarks) => {
+        const updatedBookmarks = prevBookmarks.filter(
+          (bookmark) =>
+            !(
+              bookmark.type === "room" &&
+              bookmark.jid === roomJid &&
+              bookmark.autojoin
+            )
+        );
+
+        // If bookmarks changed, update them on the server
+        if (updatedBookmarks.length !== prevBookmarks.length) {
+          const iqStanza = xml(
+            "iq",
+            { type: "set", id: "bookmarks_update" },
+            xml(
+              "query",
+              { xmlns: "jabber:iq:private" },
+              xml(
+                "storage",
+                { xmlns: "storage:bookmarks" },
+                ...updatedBookmarks.map((b) =>
+                  xml("bookmark", {
+                    id: b.id,
+                    type: b.type,
+                    jid: b.jid,
+                    name: b.name,
+                    autojoin: b.autojoin?.toString(),
+                  })
+                )
+              )
+            )
+          );
+          xmppRef.current.send(iqStanza);
+        }
+
+        return updatedBookmarks;
+      });
+
+      console.log(`Left group: ${roomJid}`);
+    }
+  }, []);
+
   const joinGroup = useCallback(
     (roomJid: string) => {
       if (xmppRef.current) {
@@ -1770,5 +1834,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
     closeSession,
     unreadMessages,
     markConversationAsRead,
+    leaveGroup,
   };
 };

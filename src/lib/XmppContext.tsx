@@ -129,6 +129,7 @@ interface XmppContextProps {
   closeSession: () => void;
   unreadMessages: UnreadMessages;
   markConversationAsRead: (jid: string) => void;
+  leaveGroup: (roomJid: string) => void;
 }
 
 // Create the context
@@ -184,6 +185,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
     closeSession,
     unreadMessages,
     markConversationAsRead,
+    leaveGroup,
   } = useXmppClient(globalXmppOptions);
 
   return (
@@ -236,6 +238,7 @@ export const XmppProvider = ({ children }: { children: ReactNode }) => {
         unreadMessages,
         markConversationAsRead,
         deleteXmppUser,
+        leaveGroup,
       }}
     >
       {children}
