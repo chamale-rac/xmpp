@@ -68,10 +68,10 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
   const [search, setSearch] = useState("");
 
   const {
-    contacts,
+    contacts: externalContacts,
     gettingContacts,
     setSelectedContact,
-    groups,
+    groups: externalGroups,
     gettingGroups,
     setSelectedGroup,
     setSelectedType,
@@ -86,6 +86,48 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
     groupInvitations,
     username,
   } = useXmpp();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getTimestamp = (message: any): number => {
+    if (!message) return 0;
+    if (typeof message.timestamp === "number") return message.timestamp;
+    if (message.timestamp instanceof Date) return message.timestamp.getTime();
+    if (typeof message.timestamp === "string") {
+      const date = new Date(message.timestamp);
+      return isNaN(date.getTime()) ? 0 : date.getTime();
+    }
+    return 0;
+  };
+
+  // sort by last message
+  const contacts = externalContacts
+    .filter(
+      (c) =>
+        !c.subscription ||
+        ((c.subscription === "none" || c.subscription === "to") &&
+          (c.jid.includes(search) || c.name?.includes(search)))
+    )
+    .sort((a, b) => {
+      const lastMessageA = messages[a.jid]?.[messages[a.jid]?.length - 1];
+      const lastMessageB = messages[b.jid]?.[messages[b.jid]?.length - 1];
+      const timestampA = getTimestamp(lastMessageA);
+      const timestampB = getTimestamp(lastMessageB);
+      return timestampB - timestampA; // Sort in descending order of last message timestamp
+    });
+
+  const groups = externalGroups
+    .filter(
+      (group) =>
+        group.isPublic &&
+        (group.jid.includes(search) || group.name.includes(search))
+    )
+    .sort((a, b) => {
+      const lastMessageA = messages[a.jid]?.[messages[a.jid]?.length - 1];
+      const lastMessageB = messages[b.jid]?.[messages[b.jid]?.length - 1];
+      const timestampA = getTimestamp(lastMessageA);
+      const timestampB = getTimestamp(lastMessageB);
+      return timestampB - timestampA; // Sort in descending order of last message timestamp
+    });
 
   return (
     <div

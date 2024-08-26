@@ -24,10 +24,14 @@ const FileUpload = () => {
 
   const handleUpload = () => {
     if (selectedType === "group" && selectedGroup) {
+      console.log("selectedGroup", selectedGroup);
       acceptedFiles.forEach((file) => {
+        console.log("file", file);
         requestUploadSlot(file, selectedGroup!.jid);
       });
     } else if (selectedType === "contact" && selectedContact) {
+      console.log("selectedContact", selectedContact);
+      console.log("acceptedFiles", acceptedFiles);
       acceptedFiles.forEach((file) => {
         requestUploadSlot(file, selectedContact!.jid);
       });

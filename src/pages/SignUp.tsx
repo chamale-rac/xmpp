@@ -157,7 +157,7 @@ const SignUp = () => {
         </Card>
       </MaxWidthWrapper>
       <div className="w-full h-20 flex items-center justify-center border-t text-gray-600 dark:border-border dark:text-gray-300">
-        <p>&copy; 2024 XMPP Chat. All rights reserved.</p>
+        <p>&copy; 2024 XMPP Chat.</p>
       </div>
     </div>
   );

@@ -1543,21 +1543,6 @@ export const useXmppClient = (xmppOptions: XmppConnectionOptions) => {
         xml("body", {}, body)
       );
       xmppRef.current.send(messageStanza);
-
-      // // Save the message to the local state immediately
-      // setMessages((prevMessages) => ({
-      //   ...prevMessages,
-      //   [to]: [
-      //     ...(prevMessages[to] || []),
-      //     {
-      //       from: usernameRef.current,
-      //       to,
-      //       body,
-      //       timestamp: new Date(),
-      //       id,
-      //     },
-      //   ],
-      // }));
     }
   }, []);
 

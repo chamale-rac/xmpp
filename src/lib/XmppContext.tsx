@@ -7,8 +7,11 @@ const globalXmppOptions = {
   domain: "alumchat.lol",
   resource: "",
   mucService: "conference.alumchat.lol",
-  uploadService: "httpfileupload.lol",
+  uploadService: "httpfileupload.alumchat.lol",
 };
+
+// service: "ws://alumchat.lol:7070/ws",
+// service: "wss://alumchat.lol:7443/ws",
 
 interface Message {
   id: string;
