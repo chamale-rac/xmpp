@@ -100,14 +100,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
   };
 
   // sort by last message
-  const contacts = externalContacts
-    .filter(
-      (c) =>
-        !c.subscription ||
-        ((c.subscription === "none" || c.subscription === "to") &&
-          (c.jid.includes(search) || c.name?.includes(search)))
-    )
-    .sort((a, b) => {
+  const contacts = externalContacts.sort((a, b) => {
       const lastMessageA = messages[a.jid]?.[messages[a.jid]?.length - 1];
       const lastMessageB = messages[b.jid]?.[messages[b.jid]?.length - 1];
       const timestampA = getTimestamp(lastMessageA);
@@ -115,13 +108,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
       return timestampB - timestampA; // Sort in descending order of last message timestamp
     });
 
-  const groups = externalGroups
-    .filter(
-      (group) =>
-        group.isPublic &&
-        (group.jid.includes(search) || group.name.includes(search))
-    )
-    .sort((a, b) => {
+  const groups = externalGroups.sort((a, b) => {
       const lastMessageA = messages[a.jid]?.[messages[a.jid]?.length - 1];
       const lastMessageB = messages[b.jid]?.[messages[b.jid]?.length - 1];
       const timestampA = getTimestamp(lastMessageA);
